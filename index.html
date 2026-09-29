@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Festungskampf</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== HAUPTMENÜ ===================== -->
+  <section id="screen-menu" class="screen active">
+    <header class="topbar">
+      <div class="player-badge">
+        <span class="level-circle" id="menu-level">1</span>
+        <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
+      </div>
+      <div class="coins">🪙 <span id="menu-coins">0</span></div>
+    </header>
+
+    <h1 class="title">⚔ Festungskampf ⚔</h1>
+
+    <nav class="menu-buttons">
+      <button id="btn-battle" class="btn btn-primary">Kampf starten</button>
+      <button id="btn-deck" class="btn">Deck bauen</button>
+      <button id="btn-fortress" class="btn">Festung ausrüsten</button>
+      <button id="btn-hunt" class="btn btn-hunt">Tägliche Jagd</button>
+    </nav>
+    <p class="hunt-status" id="hunt-status"></p>
+  </section>
+
+  <!-- ===================== FESTUNG (Ausrüsten, außerhalb des Kampfes) ===================== -->
+  <section id="screen-fortress" class="screen">
+    <header class="subbar">
+      <button class="btn btn-back" data-back>← Zurück</button>
+      <h2>Festung ausrüsten</h2>
+    </header>
+    <p class="hint">Bestücke deine Festung mit Karten aus deiner Sammlung. Diese verteidigen die Festung automatisch im Kampf.</p>
+    <div class="slot-row" id="fortress-slots"></div>
+    <h3>Sammlung</h3>
+    <div class="card-grid" id="fortress-collection"></div>
+  </section>
+
+  <!-- ===================== DECK BAUEN (4 Karten für den Kampf) ===================== -->
+  <section id="screen-deck" class="screen">
+    <header class="subbar">
+      <button class="btn btn-back" data-back>← Zurück</button>
+      <h2>Kampf-Deck (4 Karten)</h2>
+    </header>
+    <p class="hint">Wähle genau 4 Karten. Sie laufen im Kampf automatisch von links nach rechts und kämpfen von selbst.</p>
+    <div class="slot-row" id="deck-slots"></div>
+    <h3>Sammlung</h3>
+    <div class="card-grid" id="deck-collection"></div>
+  </section>
+
+  <!-- ===================== KAMPF (2D Lane Auto-Battle) ===================== -->
+  <section id="screen-battle" class="screen">
+    <header class="subbar">
+      <button class="btn btn-back" data-back>← Zurück</button>
+      <h2>Kampf</h2>
+    </header>
+    <canvas id="battle-canvas" width="720" height="220"></canvas>
+    <div class="battle-controls">
+      <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
+      <p id="battle-result"></p>
+    </div>
+  </section>
+
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
