@@ -1,6 +1,7 @@
 import { Player } from './src/player.js';
 import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
 import { simulateBattle, LANE_LENGTH, FORTRESS_HP } from './src/battle.js';
+import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
 
@@ -42,20 +43,22 @@ const player = loadPlayer();
 // ---------------------------------------------------------------- navigation
 const screens = document.querySelectorAll('.screen');
 function showScreen(id) {
+  if (id !== 'screen-hunt') cancelHuntSession();
   screens.forEach((s) => s.classList.toggle('active', s.id === id));
   if (id === 'screen-fortress') renderFortressScreen();
   if (id === 'screen-deck') renderDeckScreen();
   if (id === 'screen-battle') renderBattleScreen();
   if (id === 'screen-menu') renderMenu();
+  if (id === 'screen-hunt') startHuntSession();
 }
 
 document.getElementById('btn-battle').addEventListener('click', () => showScreen('screen-battle'));
 document.getElementById('btn-deck').addEventListener('click', () => showScreen('screen-deck'));
 document.getElementById('btn-fortress').addEventListener('click', () => showScreen('screen-fortress'));
-document.getElementById('btn-hunt').addEventListener('click', onHunt);
+document.getElementById('btn-hunt').addEventListener('click', onHuntButton);
 document.querySelectorAll('[data-back]').forEach((btn) => btn.addEventListener('click', () => showScreen('screen-menu')));
 
-// ---------------------------------------------------------------- menu / hunt
+// ---------------------------------------------------------------- menu
 function renderMenu() {
   document.getElementById('menu-level').textContent = player.level;
   document.getElementById('menu-xp-fill').style.width = `${Math.min(100, player.xp)}%`;
@@ -73,14 +76,125 @@ function renderMenu() {
   }
 }
 
-function onHunt() {
+function onHuntButton() {
+  if (!player.canHuntToday()) {
+    alert(`Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`);
+    return;
+  }
+  showScreen('screen-hunt');
+}
+
+// ---------------------------------------------------------------- Kartenjagd mini-game
+// A quick reaction game: a target ("Fährte") appears at a random spot for
+// ROUND_DURATION_MS and has to be tapped before it disappears. Accuracy over
+// HUNT_ROUNDS rounds determines the rarity of the card found (see
+// src/huntGame.js for the pure scoring logic).
+let huntState = null; // { rounds, index, hits, timeoutId, roundStart, raf, active }
+
+function cancelHuntSession() {
+  if (!huntState) return;
+  clearTimeout(huntState.timeoutId);
+  cancelAnimationFrame(huntState.raf);
+  huntState.active = false;
+  const canvas = document.getElementById('hunt-canvas');
+  canvas.onclick = null;
+  huntState = null;
+}
+
+function startHuntSession() {
+  cancelHuntSession();
+  const canvas = document.getElementById('hunt-canvas');
+  huntState = {
+    rounds: generateHuntRounds(HUNT_ROUNDS),
+    index: 0,
+    hits: 0,
+    timeoutId: null,
+    roundStart: 0,
+    raf: null,
+    active: true,
+  };
+  document.getElementById('hunt-total').textContent = HUNT_ROUNDS;
+  document.getElementById('hunt-hits').textContent = '0';
+  document.getElementById('hunt-result').textContent = '';
+  canvas.onclick = onHuntCanvasClick;
+  playHuntRound();
+}
+
+function currentHuntTarget() {
+  return huntState.rounds[huntState.index];
+}
+
+function playHuntRound() {
+  if (!huntState || !huntState.active) return;
+  if (huntState.index >= huntState.rounds.length) {
+    finishHuntSession();
+    return;
+  }
+  document.getElementById('hunt-round').textContent = huntState.index + 1;
+  huntState.roundStart = performance.now();
+  huntState.timeoutId = setTimeout(() => advanceHuntRound(false), ROUND_DURATION_MS);
+  drawHuntFrame();
+}
+
+function advanceHuntRound(wasHit) {
+  if (!huntState || !huntState.active) return;
+  clearTimeout(huntState.timeoutId);
+  cancelAnimationFrame(huntState.raf);
+  if (wasHit) huntState.hits += 1;
+  document.getElementById('hunt-hits').textContent = huntState.hits;
+  huntState.index += 1;
+  playHuntRound();
+}
+
+function onHuntCanvasClick(event) {
+  if (!huntState || !huntState.active) return;
+  const canvas = document.getElementById('hunt-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const nx = (event.clientX - rect.left) / rect.width;
+  const ny = (event.clientY - rect.top) / rect.height;
+  const hit = isHit(currentHuntTarget(), nx, ny);
+  advanceHuntRound(hit);
+}
+
+function drawHuntFrame() {
+  if (!huntState || !huntState.active) return;
+  const canvas = document.getElementById('hunt-canvas');
+  const ctx = canvas.getContext('2d');
+  const target = currentHuntTarget();
+  const elapsed = performance.now() - huntState.roundStart;
+  const remaining = Math.max(0, 1 - elapsed / ROUND_DURATION_MS);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cx = target.x * canvas.width;
+  const cy = target.y * canvas.height;
+  const r = TARGET_RADIUS * canvas.width;
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * (0.4 + 0.6 * remaining), 0, Math.PI * 2);
+  ctx.fillStyle = '#ffcf4d';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = `rgba(255, 95, 109, ${0.4 + 0.6 * remaining})`;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2 * remaining);
+  ctx.stroke();
+
+  huntState.raf = requestAnimationFrame(drawHuntFrame);
+}
+
+function finishHuntSession() {
+  const hits = huntState.hits;
+  const totalRounds = huntState.rounds.length;
+  cancelHuntSession();
+  const canvas = document.getElementById('hunt-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   try {
-    const card = player.huntDaily();
+    const card = player.completeDailyHunt(hits, totalRounds);
     savePlayer();
-    renderMenu();
-    alert(`Gefunden: ${card.name} (${card.rarity})`);
+    document.getElementById('hunt-result').textContent =
+      `${hits}/${totalRounds} Treffer — gefunden: ${card.name} (${card.rarity})`;
   } catch (err) {
-    alert(err.message);
+    document.getElementById('hunt-result').textContent = err.message;
   }
 }
 

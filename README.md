@@ -6,8 +6,11 @@ Ein 2D-Lane-Auto-Battler-Prototyp im Stil eines mobilen Sammelkartenspiels
 ## Spielkonzept
 
 - **Hauptmenü**: zeigt Spieler-Level, XP-Fortschritt und Münzen (Clash-Royale-artig).
-- **Tägliche Jagd**: einmal pro 24h kann eine zufällige Karte (nach Seltenheit
-  gewichtet) gefunden werden, die dauerhaft der Kartensammlung hinzugefügt wird.
+- **Tägliche Jagd (Kartenjagd-Minigame)**: einmal pro 24h öffnet sich ein
+  eigenes Tap-Reaktionsspiel — eine Fährte erscheint an einer zufälligen
+  Position und muss innerhalb kurzer Zeit angetippt werden, bevor sie
+  verschwindet (6 Runden). Je höher die Trefferquote, desto seltener die am
+  Ende gefundene Karte, die dauerhaft der Kartensammlung hinzugefügt wird.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.
@@ -19,8 +22,9 @@ Ein 2D-Lane-Auto-Battler-Prototyp im Stil eines mobilen Sammelkartenspiels
 
 ## Projektstruktur
 
-- `src/cards.js` — Kartenbibliothek und gewichtete Zufallsauswahl für die
-  tägliche Jagd.
+- `src/cards.js` — Kartenbibliothek und generische gewichtete Zufallsauswahl.
+- `src/huntGame.js` — Logik des Kartenjagd-Minigames (Ziel-Positionen,
+  Treffererkennung, Belohnung nach Trefferquote).
 - `src/player.js` — Spieler-Fortschritt (Level/XP, Sammlung, Festungs-Slots,
   Kampf-Deck, Jagd-Cooldown).
 - `src/battle.js` — deterministische 2D-Lane-Kampfsimulation.

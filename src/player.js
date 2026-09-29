@@ -1,4 +1,5 @@
-import { getCardById, rollRandomCard } from './cards.js';
+import { getCardById } from './cards.js';
+import { rollHuntReward } from './huntGame.js';
 
 const DECK_SIZE = 4;
 const FORTRESS_SLOTS = 4;
@@ -51,14 +52,15 @@ export class Player {
   }
 
   /**
-   * Performs the "daily hunt": grants a random card (weighted by rarity)
-   * once every 24h. Throws if called again before the cooldown expires.
+   * Completes the daily hunt mini-game: `hits` out of `totalRounds` targets
+   * were successfully tapped, which determines the rarity of the card
+   * found. Can only be called once every 24h.
    */
-  huntDaily(rng = Math.random) {
+  completeDailyHunt(hits, totalRounds, rng = Math.random) {
     if (!this.canHuntToday()) {
       throw new Error('Daily hunt already claimed. Try again later.');
     }
-    const card = rollRandomCard(rng);
+    const card = rollHuntReward(hits, totalRounds, rng);
     this.lastHuntAt = this.now();
     if (!this.collection.includes(card.id)) {
       this.collection.push(card.id);

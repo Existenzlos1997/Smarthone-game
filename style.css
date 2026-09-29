@@ -97,6 +97,23 @@ body {
 
 .hint { color: #c3c9ec; font-size: 0.92rem; }
 
+.hunt-progress { text-align: center; font-weight: 700; color: var(--accent-2); }
+
+#hunt-canvas {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  display: block;
+  margin: 0 auto;
+  background: radial-gradient(circle at 50% 40%, #234a2e, #10231a 75%);
+  border-radius: 14px;
+  border: 2px solid #3a447a;
+  touch-action: manipulation;
+  cursor: crosshair;
+}
+
+#hunt-result { text-align: center; font-weight: 700; min-height: 1.4em; }
+
 .slot-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
 
 .slot {

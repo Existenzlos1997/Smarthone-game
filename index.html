@@ -30,6 +30,18 @@
     <p class="hunt-status" id="hunt-status"></p>
   </section>
 
+  <!-- ===================== KARTENJAGD (Tap-Reaktions-Minigame) ===================== -->
+  <section id="screen-hunt" class="screen">
+    <header class="subbar">
+      <button class="btn btn-back" data-back id="btn-hunt-cancel">← Abbrechen</button>
+      <h2>Kartenjagd</h2>
+    </header>
+    <p class="hint">Tippe die Fährte, bevor sie verschwindet! Je genauer du triffst, desto seltener die gefundene Karte.</p>
+    <p class="hunt-progress"><span id="hunt-round">0</span> / <span id="hunt-total">6</span> · Treffer: <span id="hunt-hits">0</span></p>
+    <canvas id="hunt-canvas" width="500" height="500"></canvas>
+    <p id="hunt-result"></p>
+  </section>
+
   <!-- ===================== FESTUNG (Ausrüsten, außerhalb des Kampfes) ===================== -->
   <section id="screen-fortress" class="screen">
     <header class="subbar">

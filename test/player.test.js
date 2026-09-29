@@ -34,10 +34,10 @@ test('daily hunt grants a card and enforces a 24h cooldown', () => {
   const player = new Player({ now: () => now });
 
   assert.equal(player.canHuntToday(), true);
-  const card = player.huntDaily(() => 0); // deterministic roll -> first card in library
+  const card = player.completeDailyHunt(6, 6, () => 0); // perfect run, deterministic roll
   assert.ok(player.collection.includes(card.id));
   assert.equal(player.canHuntToday(), false);
-  assert.throws(() => player.huntDaily());
+  assert.throws(() => player.completeDailyHunt(6, 6));
 
   now += 24 * 60 * 60 * 1000; // advance exactly 24h
   assert.equal(player.canHuntToday(), true);

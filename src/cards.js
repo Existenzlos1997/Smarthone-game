@@ -36,17 +36,33 @@ const RARITY_WEIGHTS = {
 };
 
 /**
- * Picks a random card from the library, weighted by rarity.
+ * Picks a random card from the library using an arbitrary rarity weight
+ * table (defaults to the base RARITY_WEIGHTS).
+ * @param {Record<string, number>} weights - weight per rarity.
  * @param {() => number} rng - random source returning [0, 1); defaults to Math.random.
  */
-export function rollRandomCard(rng = Math.random) {
-  const totalWeight = CARD_LIBRARY.reduce((sum, card) => sum + RARITY_WEIGHTS[card.rarity], 0);
-  let roll = rng() * totalWeight;
-  for (const card of CARD_LIBRARY) {
-    roll -= RARITY_WEIGHTS[card.rarity];
-    if (roll <= 0) {
+export function pickWeightedCard(weights = RARITY_WEIGHTS, rng = Math.random) {
+  const weighted = CARD_LIBRARY.filter((card) => (weights[card.rarity] ?? 0) > 0);
+  if (weighted.length === 0) {
+    throw new Error('No card has a positive weight for the given weight table');
+  }
+  const totalWeight = weighted.reduce((sum, card) => sum + weights[card.rarity], 0);
+  const roll = rng() * totalWeight;
+  let cumulative = 0;
+  for (const card of weighted) {
+    cumulative += weights[card.rarity];
+    if (roll < cumulative) {
       return card;
     }
   }
-  return CARD_LIBRARY[CARD_LIBRARY.length - 1];
+  return weighted[weighted.length - 1];
 }
+
+/**
+ * Picks a random card from the library, weighted by the base rarity table.
+ * @param {() => number} rng - random source returning [0, 1); defaults to Math.random.
+ */
+export function rollRandomCard(rng = Math.random) {
+  return pickWeightedCard(RARITY_WEIGHTS, rng);
+}
+
