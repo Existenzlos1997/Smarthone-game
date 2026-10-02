@@ -1,0 +1,11 @@
+{
+  "name": "smarthone-game",
+  "version": "0.1.0",
+  "description": "2D lane auto-battler prototype with a Clash-Royale-style menu, player levels, a daily card hunt and a fortress you equip between battles.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT"
+}

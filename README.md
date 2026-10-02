@@ -1,1 +1,75 @@
-# Smarthone-game
+# Smarthone-game — Festungskampf
+
+Ein 2D-Lane-Auto-Battler-Prototyp im Stil eines mobilen Sammelkartenspiels
+(Menü, Spieler-Level, tägliche Kartenjagd, Festungsausbau, Kampf-Deck).
+
+## 📱 Auf dem Handy testen
+
+Das Spiel läuft komplett im Browser — es muss nichts installiert werden.
+
+Nach dem Mergen dieses Branches/PRs in `main` baut eine GitHub-Actions-Workflow
+(`.github/workflows/deploy-pages.yml`) die Seite automatisch und veröffentlicht
+sie über **GitHub Pages**. Danach ist das Spiel unter folgendem Link
+erreichbar (einfach mit dem Smartphone-Browser öffnen):
+
+```
+https://existenzlos1997.github.io/Smarthone-game/
+```
+
+**Einmalige Einrichtung (nur falls der Link noch nicht funktioniert):**
+Repository → Settings → Pages → unter "Build and deployment" → Source auf
+**"GitHub Actions"** stellen. Ab dann aktualisiert sich der Link automatisch
+bei jedem Push nach `main`.
+
+## Spielkonzept
+
+- **Festung/Hauptmenü**: zeigt Spieler-Level, XP-Fortschritt, Pokale/Arena-
+  Fortschritt sowie Münzen und Diamanten (Clash-Royale-artig), dazu eine
+  Übersicht der eigenen Kartensammlung mit Kartenstufe.
+- **Tägliche Jagd (Kartenjagd-Minigame)**: einmal pro 24h öffnet sich ein
+  eigenes Tap-Reaktionsspiel — eine Fährte erscheint an einer zufälligen
+  Position und muss innerhalb kurzer Zeit angetippt werden, bevor sie
+  verschwindet (6 Runden). Je höher die Trefferquote, desto seltener die am
+  Ende gefundene Karte. Neue Karten kommen in die Sammlung, bereits
+  vorhandene Karten werden stattdessen eine Stufe höher gestuft.
+- **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
+  ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
+  Diese Karten verteidigen die Festung automatisch während eines Kampfes.
+- **Kampf-Deck**: vor dem Kampf wird ein eigenes Deck aus genau 4 Karten
+  zusammengestellt.
+- **Kampf**: eine 2D-Lane-Simulation, in der die 4 Deck-Karten automatisch von
+  links nach rechts (bzw. umgekehrt für den Gegner) laufen, aufeinandertreffen
+  und von selbst kämpfen, bis eine der beiden Festungen fällt. Sieg/Niederlage
+  verändert die Pokalzahl und damit die Arena.
+- **Untere Navigationsleiste**: Shop, Karten (Deck-Builder), Kampf (Festung),
+  Jagd und Allianz — Shop und Allianz sind aktuell Platzhalter für künftige
+  Features.
+
+## Projektstruktur
+
+- `src/cards.js` — Kartenbibliothek und generische gewichtete Zufallsauswahl.
+- `src/huntGame.js` — Logik des Kartenjagd-Minigames (Ziel-Positionen,
+  Treffererkennung, Belohnung nach Trefferquote).
+- `src/arenas.js` — Arena-/Pokal-Fortschrittslogik.
+- `src/player.js` — Spieler-Fortschritt (Level/XP, Pokale, Gems, Sammlung mit
+  Kartenstufen, Festungs-Slots, Kampf-Deck, Jagd-Cooldown).
+- `src/battle.js` — deterministische 2D-Lane-Kampfsimulation.
+- `index.html`, `style.css`, `app.js` — spielbarer Browser-Prototyp, der die
+  obigen Module verwendet und den Spielstand in `localStorage` speichert.
+- `test/` — Unit-Tests für die Spiellogik (Node's eingebauter Test-Runner).
+- `.github/workflows/deploy-pages.yml` — veröffentlicht die statische Seite
+  automatisch auf GitHub Pages.
+
+## Entwickeln & Spielen
+
+```bash
+# Spielbaren Prototyp lokal starten (beliebiger statischer Server reicht):
+npx http-server .
+# dann im Browser http://localhost:8080 öffnen
+```
+
+## Tests ausführen
+
+```bash
+npm test
+```
