@@ -26,6 +26,8 @@ body {
 .screen { display: none; }
 .screen.active { display: block; }
 
+#app { padding-bottom: 96px; } /* keep content clear of the fixed bottom nav */
+
 .topbar, .subbar {
   display: flex;
   align-items: center;
@@ -33,7 +35,101 @@ body {
   gap: 12px;
 }
 
-.player-badge { display: flex; align-items: center; gap: 8px; }
+.fortress-title {
+  font-size: 1.3rem;
+  margin: 4px 0;
+  text-shadow: 0 2px 0 #000a;
+}
+
+.topbar-icons { display: flex; gap: 8px; }
+
+.icon-btn {
+  position: relative;
+  border: 2px solid #3a447a;
+  background: var(--panel);
+  color: #f2f4ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 50%;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.currency-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.trophy-pill {
+  flex: 1 1 140px;
+  background: var(--panel);
+  border: 2px solid #3a447a;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.trophy-pill-top { font-weight: 700; font-size: 0.85rem; }
+
+.trophy-track {
+  margin-top: 4px;
+  height: 6px;
+  background: #10152b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trophy-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #ffaf1f); width: 0%; }
+
+.currency-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel);
+  border: 2px solid #3a447a;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.plus-btn {
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+  background: #38c172;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.player-level-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
 
 .level-circle {
   background: var(--accent);
@@ -45,9 +141,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .xp-bar {
+  flex: 1;
   width: 120px;
   height: 10px;
   background: #10152b;
@@ -58,22 +156,50 @@ body {
 
 .xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); width: 0%; }
 
-.coins { font-weight: 700; }
-
-.title {
-  text-align: center;
-  font-size: 2.1rem;
-  margin: 24px 0;
-  text-shadow: 0 3px 0 #000a;
+.section-title {
+  font-size: 1.2rem;
+  margin: 24px 0 10px;
+  text-shadow: 0 2px 0 #000a;
 }
 
-.menu-buttons {
+.fortress-banner {
+  position: relative;
+  margin-top: 14px;
+  border-radius: 16px;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 16px rgba(255, 207, 77, 0.35);
+  background: radial-gradient(circle at 50% 20%, #3a2e6b, #120a26 80%);
+  padding: 18px 14px 20px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.banner-scene { font-size: 3.2rem; margin-bottom: 6px; }
+.banner-moon { margin-right: 10px; filter: drop-shadow(0 0 8px #fff8); }
+.banner-castle { filter: drop-shadow(0 4px 6px #000a); }
+
+.arena-name {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--accent);
+  text-shadow: 0 2px 0 #000a;
+}
+
+.arena-next { color: #c3c9ec; font-size: 0.85rem; margin-top: 2px; }
+
+.banner-actions {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 320px;
-  margin: 0 auto;
+  gap: 10px;
+  max-width: 280px;
+  margin: 14px auto 0;
 }
+
+.btn-ghost {
+  background: transparent;
+  border: 2px solid #3a447a;
+}
+
 
 .btn {
   border: none;
@@ -89,7 +215,6 @@ body {
 
 .btn:active { transform: translateY(1px); }
 .btn-primary { background: linear-gradient(180deg, #3ec6ff, #2a86c9); border-color: #1c5a8c; }
-.btn-hunt { background: linear-gradient(180deg, #ffd166, #e0a012); color: #2b2200; border-color: #a3760c; }
 .btn-back { background: none; border: none; color: var(--accent-2); font-weight: 700; padding: 8px 0; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -140,6 +265,7 @@ body {
 }
 
 .card {
+  position: relative;
   border-radius: 10px;
   padding: 8px 6px;
   text-align: center;
@@ -155,6 +281,89 @@ body {
 .card.rarity-legendary { border-color: var(--accent); }
 .card.selected { outline: 3px solid var(--accent); }
 .card .stats { color: #c3c9ec; font-size: 0.7rem; margin-top: 4px; }
+
+.card-badges {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.level-badge {
+  background: var(--accent);
+  color: #24263f;
+  font-weight: 800;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rarity-badge { font-size: 0.85rem; }
+.card-name { font-weight: 700; }
+.card-sub { color: #c3c9ec; font-size: 0.68rem; margin-top: 2px; }
+
+.placeholder-msg {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 1rem;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  background: #161d3a;
+  border-top: 2px solid #3a447a;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index: 10;
+}
+
+.nav-btn {
+  flex: 1;
+  max-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: #9aa3d1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.nav-btn .nav-icon { font-size: 1.3rem; }
+.nav-btn.active { color: var(--accent); }
+
+.nav-btn-main {
+  position: relative;
+  top: -10px;
+}
+
+.nav-btn-main .nav-icon {
+  background: linear-gradient(180deg, #ffd166, #e0a012);
+  color: #2b2200;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  border: 3px solid #120a26;
+  box-shadow: 0 4px 10px #000a;
+}
+
+.nav-btn-main.active .nav-icon { outline: 2px solid var(--accent); }
 
 #battle-canvas {
   width: 100%;

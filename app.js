@@ -2,8 +2,15 @@ import { Player } from './src/player.js';
 import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
 import { simulateBattle, LANE_LENGTH, FORTRESS_HP } from './src/battle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
+import { getArenaProgress } from './src/arenas.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
+const RARITY_ICON = {
+  [RARITY.COMMON]: '💀',
+  [RARITY.RARE]: '🌀',
+  [RARITY.EPIC]: '🔥',
+  [RARITY.LEGENDARY]: '🌙',
+};
 
 function loadPlayer() {
   const player = new Player();
@@ -14,7 +21,10 @@ function loadPlayer() {
       player.level = data.level ?? 1;
       player.xp = data.xp ?? 0;
       player.coins = data.coins ?? 0;
+      player.gems = data.gems ?? player.gems;
+      player.trophies = data.trophies ?? 0;
       player.collection = data.collection ?? player.collection;
+      player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
       player.deck = data.deck ?? [];
       player.lastHuntAt = data.lastHuntAt ?? null;
@@ -31,7 +41,10 @@ function savePlayer() {
     level: player.level,
     xp: player.xp,
     coins: player.coins,
+    gems: player.gems,
+    trophies: player.trophies,
     collection: player.collection,
+    cardLevels: player.cardLevels,
     fortressSlots: player.fortressSlots,
     deck: player.deck,
     lastHuntAt: player.lastHuntAt,
@@ -42,9 +55,12 @@ const player = loadPlayer();
 
 // ---------------------------------------------------------------- navigation
 const screens = document.querySelectorAll('.screen');
+const navButtons = document.querySelectorAll('.nav-btn');
+
 function showScreen(id) {
   if (id !== 'screen-hunt') cancelHuntSession();
   screens.forEach((s) => s.classList.toggle('active', s.id === id));
+  navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === id));
   if (id === 'screen-fortress') renderFortressScreen();
   if (id === 'screen-deck') renderDeckScreen();
   if (id === 'screen-battle') renderBattleScreen();
@@ -53,36 +69,96 @@ function showScreen(id) {
 }
 
 document.getElementById('btn-battle').addEventListener('click', () => showScreen('screen-battle'));
-document.getElementById('btn-deck').addEventListener('click', () => showScreen('screen-deck'));
 document.getElementById('btn-fortress').addEventListener('click', () => showScreen('screen-fortress'));
-document.getElementById('btn-hunt').addEventListener('click', onHuntButton);
 document.querySelectorAll('[data-back]').forEach((btn) => btn.addEventListener('click', () => showScreen('screen-menu')));
-
-// ---------------------------------------------------------------- menu
-function renderMenu() {
-  document.getElementById('menu-level').textContent = player.level;
-  document.getElementById('menu-xp-fill').style.width = `${Math.min(100, player.xp)}%`;
-  document.getElementById('menu-coins').textContent = player.coins;
-
-  const huntBtn = document.getElementById('btn-hunt');
-  const status = document.getElementById('hunt-status');
-  if (player.canHuntToday()) {
-    huntBtn.disabled = false;
-    status.textContent = '';
-  } else {
-    huntBtn.disabled = true;
-    const hours = Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000));
-    status.textContent = `Nächste Jagd in ca. ${hours} Std.`;
-  }
-}
-
-function onHuntButton() {
-  if (!player.canHuntToday()) {
+document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => {
+  if (btn.dataset.nav === 'screen-hunt' && !player.canHuntToday()) {
     alert(`Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`);
     return;
   }
-  showScreen('screen-hunt');
+  showScreen(btn.dataset.nav);
+}));
+document.getElementById('btn-share').addEventListener('click', onShare);
+document.getElementById('btn-bell').addEventListener('click', () => {
+  alert(player.canHuntToday() ? 'Deine tägliche Jagd wartet auf dich! 🎯' : 'Keine neuen Benachrichtigungen.');
+});
+document.querySelectorAll('.plus-btn').forEach((btn) => btn.addEventListener('click', () => {
+  alert('Der Shop ist noch im Bau. Schau bald wieder vorbei!');
+}));
+
+function onShare() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Festungskampf', url }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(
+      () => alert('Link kopiert! Teile ihn mit deinen Freunden.'),
+      () => alert(url),
+    );
+  } else {
+    alert(url);
+  }
 }
+
+// ---------------------------------------------------------------- menu / fortress overview
+function renderMenu() {
+  document.getElementById('menu-fortress-title').textContent = `Festung von ${player.name}`;
+  document.getElementById('menu-level').textContent = player.level;
+  document.getElementById('menu-xp-fill').style.width = `${Math.min(100, player.xp)}%`;
+  document.getElementById('menu-coins').textContent = player.coins;
+  document.getElementById('menu-gems').textContent = player.gems;
+
+  const { current, next } = getArenaProgress(player.trophies);
+  document.getElementById('menu-arena-name').textContent = current.name;
+  document.getElementById('menu-trophies').textContent = player.trophies;
+  if (next) {
+    document.getElementById('menu-next-threshold').textContent = next.threshold;
+    document.getElementById('menu-arena-next').textContent = `Nächste Arena ab ${next.threshold} Pokalen`;
+    const span = next.threshold - current.threshold;
+    const progress = span > 0 ? ((player.trophies - current.threshold) / span) * 100 : 100;
+    document.getElementById('menu-trophy-fill').style.width = `${Math.max(0, Math.min(100, progress))}%`;
+  } else {
+    document.getElementById('menu-next-threshold').textContent = '∞';
+    document.getElementById('menu-arena-next').textContent = 'Höchste Arena erreicht!';
+    document.getElementById('menu-trophy-fill').style.width = '100%';
+  }
+
+  const bellBadge = document.getElementById('menu-notif-badge');
+  if (player.canHuntToday()) {
+    bellBadge.hidden = false;
+    bellBadge.textContent = '1';
+  } else {
+    bellBadge.hidden = true;
+  }
+
+  const status = document.getElementById('hunt-status');
+  status.textContent = player.canHuntToday()
+    ? 'Tägliche Jagd verfügbar — tippe auf „Jagd“ unten!'
+    : `Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`;
+
+  const collectionEl = document.getElementById('menu-collection');
+  collectionEl.innerHTML = '';
+  player.collection.forEach((cardId) => {
+    collectionEl.appendChild(collectionTile(cardId));
+  });
+}
+
+function collectionTile(cardId) {
+  const card = getCardById(cardId);
+  const level = player.getCardLevel(cardId);
+  const div = document.createElement('div');
+  div.className = `card rarity-${card.rarity}`;
+  div.innerHTML = `
+    <div class="card-badges">
+      <span class="level-badge">${level}</span>
+      <span class="rarity-badge">${RARITY_ICON[card.rarity]}</span>
+    </div>
+    <div class="card-name">${card.name}</div>
+    <div class="card-sub">Lv. ${level}</div>
+  `;
+  return div;
+}
+
 
 // ---------------------------------------------------------------- Kartenjagd mini-game
 // A quick reaction game: a target ("Fährte") appears at a random spot for
@@ -189,10 +265,11 @@ function finishHuntSession() {
   const canvas = document.getElementById('hunt-canvas');
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   try {
-    const card = player.completeDailyHunt(hits, totalRounds);
+    const { card, leveledUp, level } = player.completeDailyHunt(hits, totalRounds);
     savePlayer();
+    const suffix = leveledUp ? ` — bereits bekannt, jetzt Lv. ${level}!` : ' — neu in der Sammlung!';
     document.getElementById('hunt-result').textContent =
-      `${hits}/${totalRounds} Treffer — gefunden: ${card.name} (${card.rarity})`;
+      `${hits}/${totalRounds} Treffer — gefunden: ${card.name} (${card.rarity})${suffix}`;
   } catch (err) {
     document.getElementById('hunt-result').textContent = err.message;
   }
@@ -344,13 +421,14 @@ function runBattle(ctx, canvas) {
 
   animateResult(ctx, canvas, lastResult, () => {
     const resultEl = document.getElementById('battle-result');
+    player.recordBattleOutcome(lastResult.winner);
     if (lastResult.winner === 'player') {
       const xpGain = 40;
       const leveledUp = player.addXp(xpGain);
       player.coins += 20;
-      resultEl.textContent = `Sieg! +${xpGain} XP, +20 Münzen${leveledUp ? ' — Level Up!' : ''}`;
+      resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +20 Münzen${leveledUp ? ' — Level Up!' : ''}`;
     } else if (lastResult.winner === 'enemy') {
-      resultEl.textContent = 'Niederlage. Verbessere dein Deck und versuche es erneut.';
+      resultEl.textContent = 'Niederlage. -10 🏆. Verbessere dein Deck und versuche es erneut.';
     } else {
       resultEl.textContent = 'Unentschieden.';
     }

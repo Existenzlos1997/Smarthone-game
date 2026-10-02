@@ -9,27 +9,67 @@
 <body>
 <div id="app">
 
-  <!-- ===================== HAUPTMENÜ ===================== -->
+  <!-- ===================== HAUPTMENÜ / FESTUNG ===================== -->
   <section id="screen-menu" class="screen active">
     <header class="topbar">
-      <div class="player-badge">
-        <span class="level-circle" id="menu-level">1</span>
-        <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
+      <h1 class="fortress-title" id="menu-fortress-title">Festung von Spieler</h1>
+      <div class="topbar-icons">
+        <button class="icon-btn" id="btn-bell" title="Benachrichtigungen">
+          🔔<span class="badge" id="menu-notif-badge" hidden></span>
+        </button>
+        <button class="icon-btn" id="btn-share" title="Teilen">🔗</button>
       </div>
-      <div class="coins">🪙 <span id="menu-coins">0</span></div>
     </header>
 
-    <h1 class="title">⚔ Festungskampf ⚔</h1>
+    <div class="currency-bar">
+      <div class="trophy-pill">
+        <div class="trophy-pill-top">🏆 <span id="menu-trophies">0</span> / <span id="menu-next-threshold">150</span></div>
+        <div class="trophy-track"><div class="trophy-fill" id="menu-trophy-fill"></div></div>
+      </div>
+      <div class="currency-pill">🪙 <span id="menu-coins">0</span> <button class="plus-btn" data-currency="coins">+</button></div>
+      <div class="currency-pill">💎 <span id="menu-gems">0</span> <button class="plus-btn" data-currency="gems">+</button></div>
+    </div>
 
-    <nav class="menu-buttons">
-      <button id="btn-battle" class="btn btn-primary">Kampf starten</button>
-      <button id="btn-deck" class="btn">Deck bauen</button>
-      <button id="btn-fortress" class="btn">Festung ausrüsten</button>
-      <button id="btn-hunt" class="btn btn-hunt">Tägliche Jagd</button>
-    </nav>
+    <div class="player-level-row">
+      <span class="level-circle" id="menu-level">1</span>
+      <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
+    </div>
+
+    <div class="fortress-banner">
+      <div class="banner-scene" aria-hidden="true">
+        <span class="banner-moon">🌕</span>
+        <span class="banner-castle">🏰</span>
+      </div>
+      <div class="banner-caption">
+        <div class="arena-name" id="menu-arena-name">Arena 1: Heimatdorf</div>
+        <div class="arena-next" id="menu-arena-next">Nächste Arena ab 150 Pokalen</div>
+      </div>
+      <div class="banner-actions">
+        <button id="btn-battle" class="btn btn-primary">⚔ Kampf starten</button>
+        <button id="btn-fortress" class="btn btn-ghost">🛡 Festung ausrüsten</button>
+      </div>
+    </div>
+
+    <h3 class="section-title">Deine Karten</h3>
+    <div class="card-grid" id="menu-collection"></div>
     <p class="hunt-status" id="hunt-status"></p>
   </section>
 
+  <!-- ===================== SHOP (Platzhalter) ===================== -->
+  <section id="screen-shop" class="screen">
+    <header class="subbar">
+      <h2>Shop</h2>
+    </header>
+    <p class="hint placeholder-msg">🛒 Der Shop ist noch im Bau. Schau bald wieder vorbei!</p>
+  </section>
+
+  <!-- ===================== ALLIANZ (Platzhalter) ===================== -->
+  <section id="screen-alliance" class="screen">
+    <header class="subbar">
+      <h2>Allianz</h2>
+    </header>
+    <p class="hint placeholder-msg">🛡 Allianzen sind noch im Bau. Schau bald wieder vorbei!</p>
+  </section>
   <!-- ===================== KARTENJAGD (Tap-Reaktions-Minigame) ===================== -->
   <section id="screen-hunt" class="screen">
     <header class="subbar">
@@ -78,6 +118,25 @@
       <p id="battle-result"></p>
     </div>
   </section>
+
+  <!-- ===================== UNTERE NAVIGATIONSLEISTE ===================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" data-nav="screen-shop">
+      <span class="nav-icon">🛒</span><span class="nav-label">Shop</span>
+    </button>
+    <button class="nav-btn" data-nav="screen-deck">
+      <span class="nav-icon">🂠</span><span class="nav-label">Karten</span>
+    </button>
+    <button class="nav-btn nav-btn-main active" data-nav="screen-menu">
+      <span class="nav-icon">⚔</span><span class="nav-label">Kampf</span>
+    </button>
+    <button class="nav-btn" data-nav="screen-hunt" id="nav-hunt">
+      <span class="nav-icon">🎯</span><span class="nav-label">Jagd</span>
+    </button>
+    <button class="nav-btn" data-nav="screen-alliance">
+      <span class="nav-icon">🛡</span><span class="nav-label">Allianz</span>
+    </button>
+  </nav>
 
 </div>
 <script type="module" src="app.js"></script>

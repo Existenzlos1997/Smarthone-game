@@ -34,13 +34,39 @@ test('daily hunt grants a card and enforces a 24h cooldown', () => {
   const player = new Player({ now: () => now });
 
   assert.equal(player.canHuntToday(), true);
-  const card = player.completeDailyHunt(6, 6, () => 0); // perfect run, deterministic roll
-  assert.ok(player.collection.includes(card.id));
+  const result = player.completeDailyHunt(6, 6, () => 0); // perfect run, deterministic roll
+  assert.ok(player.collection.includes(result.card.id));
   assert.equal(player.canHuntToday(), false);
   assert.throws(() => player.completeDailyHunt(6, 6));
 
   now += 24 * 60 * 60 * 1000; // advance exactly 24h
   assert.equal(player.canHuntToday(), true);
+});
+
+test('finding an already-owned card upgrades it instead of duplicating it', () => {
+  let now = Date.parse('2024-01-01T00:00:00Z');
+  const player = new Player({ now: () => now });
+  const first = player.completeDailyHunt(6, 6, () => 0);
+  assert.equal(first.leveledUp, false);
+  assert.equal(player.getCardLevel(first.card.id), 1);
+
+  now += 24 * 60 * 60 * 1000;
+  const second = player.completeDailyHunt(6, 6, () => 0); // same deterministic roll -> same card
+  assert.equal(second.card.id, first.card.id);
+  assert.equal(second.leveledUp, true);
+  assert.equal(player.getCardLevel(first.card.id), 2);
+  assert.equal(player.collection.filter((id) => id === first.card.id).length, 1);
+});
+
+test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
+  const player = new Player();
+  player.recordBattleOutcome('player');
+  assert.equal(player.trophies, 30);
+  player.recordBattleOutcome('enemy');
+  assert.equal(player.trophies, 20);
+  player.recordBattleOutcome('enemy');
+  player.recordBattleOutcome('enemy');
+  assert.equal(player.trophies, 0); // clamped at 0, not negative
 });
 
 test('equipping the fortress requires the card to be owned', () => {
