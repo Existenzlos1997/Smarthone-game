@@ -11,6 +11,21 @@ const TROOP_ADVANCE_END = 0.72;
 const CLASH_START = 0.68;
 const CLASH_END = 0.96;
 const CLASH_PULSE_FREQUENCY = 90;
+const ARENA_LAYOUT = {
+  groundHeight: 0.69,
+  fortressLeft: 0.025,
+  fortressHeight: 0.42,
+  playerTroopStart: 0.182,
+  playerTroopEnd: 0.479,
+  enemyTroopStart: 0.818,
+  enemyTroopEnd: 0.521,
+  troopStartSpacing: 0.008,
+  troopEndSpacing: 0.0125,
+  troopHeight: 22,
+  troopStagger: 17,
+};
+const FORTRESS_TOWER_WIDTH = 94;
+const FORTRESS_TOWER_HEIGHT = 150;
 const RARITY_ICON = {
   [RARITY.COMMON]: '💀',
   [RARITY.RARE]: '🌀',
@@ -78,8 +93,15 @@ const player = loadPlayer();
 // ---------------------------------------------------------------- navigation
 const screens = document.querySelectorAll('.screen');
 const navButtons = document.querySelectorAll('.nav-btn');
+let battleAnimationFrame = null;
 
 function showScreen(id) {
+  if (id !== 'screen-battle' && battleAnimationFrame !== null) {
+    cancelAnimationFrame(battleAnimationFrame);
+    battleAnimationFrame = null;
+    document.getElementById('btn-start-battle').disabled = false;
+    document.getElementById('battle-result').textContent = 'Kampf abgebrochen — kein Ergebnis gewertet.';
+  }
   if (id !== 'screen-hunt') cancelHuntSession();
   screens.forEach((s) => s.classList.toggle('active', s.id === id));
   navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === id));
@@ -557,12 +579,13 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
     previousTimer = timerText;
 
     if (progress < 1) {
-      requestAnimationFrame(frame);
+      battleAnimationFrame = requestAnimationFrame(frame);
     } else {
+      battleAnimationFrame = null;
       onDone();
     }
   }
-  requestAnimationFrame(frame);
+  battleAnimationFrame = requestAnimationFrame(frame);
 }
 
 function getFortressHealth(result, progress) {
@@ -576,7 +599,7 @@ function getFortressHealth(result, progress) {
 function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = getFortressHealth(result, progress)) {
   ctx.save();
   const { width, height } = canvas;
-  const groundY = height * 0.69;
+  const groundY = height * ARENA_LAYOUT.groundHeight;
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
   sky.addColorStop(0, '#35205f');
   sky.addColorStop(0.58, '#9a4f91');
@@ -633,11 +656,11 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, f
   }
   ctx.globalAlpha = 1;
 
-  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#45d9b0', fortressHealth.player);
+  drawFortress(ctx, width * ARENA_LAYOUT.fortressLeft, groundY - height * ARENA_LAYOUT.fortressHeight, '#45d9b0', fortressHealth.player);
   ctx.save();
   ctx.translate(width, 0);
   ctx.scale(-1, 1);
-  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#ff667b', fortressHealth.enemy);
+  drawFortress(ctx, width * ARENA_LAYOUT.fortressLeft, groundY - height * ARENA_LAYOUT.fortressHeight, '#ff667b', fortressHealth.enemy);
   ctx.restore();
 
   const advance = Math.min(1, progress / TROOP_ADVANCE_END);
@@ -669,8 +692,8 @@ function drawHill(ctx, width, groundY, heightRatio, color, offset) {
 }
 
 function drawFortress(ctx, x, y, color, hp) {
-  const towerWidth = 94;
-  const towerHeight = 150;
+  const towerWidth = FORTRESS_TOWER_WIDTH;
+  const towerHeight = FORTRESS_TOWER_HEIGHT;
   ctx.save();
   ctx.shadowColor = '#08091c99';
   ctx.shadowBlur = 16;
@@ -736,16 +759,20 @@ function roundedRectPath(ctx, x, y, width, height, radius) {
 
 function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
   ctx.save();
-  const icons = deck.map((cardId) => CARD_ART[cardId] ?? '⚔️');
+  const icons = (Array.isArray(deck) ? deck : []).map((cardId) => CARD_ART[cardId] ?? '⚔️');
   if (icons.length === 0) {
     ctx.restore();
     return;
   }
   icons.forEach((icon, index) => {
-    const startX = isPlayer ? width * 0.182 + index * width * 0.008 : width * 0.818 - index * width * 0.008;
-    const endX = isPlayer ? width * 0.479 - index * width * 0.0125 : width * 0.521 + index * width * 0.0125;
+    const startX = isPlayer
+      ? width * ARENA_LAYOUT.playerTroopStart + index * width * ARENA_LAYOUT.troopStartSpacing
+      : width * ARENA_LAYOUT.enemyTroopStart - index * width * ARENA_LAYOUT.troopStartSpacing;
+    const endX = isPlayer
+      ? width * ARENA_LAYOUT.playerTroopEnd - index * width * ARENA_LAYOUT.troopEndSpacing
+      : width * ARENA_LAYOUT.enemyTroopEnd + index * width * ARENA_LAYOUT.troopEndSpacing;
     const x = startX + (endX - startX) * progress;
-    const y = groundY - 22 - (index % 2) * 17;
+    const y = groundY - ARENA_LAYOUT.troopHeight - (index % 2) * ARENA_LAYOUT.troopStagger;
     ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
     ctx.beginPath();
     ctx.ellipse(x, y + 5, 24, 8, 0, 0, Math.PI * 2);
