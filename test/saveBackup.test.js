@@ -50,6 +50,7 @@ test('save backup rejects corrupt progression without altering the source save',
     (save) => { save.cardLevels.swordsman = 99; },
     (save) => { save.fortressSlots[0] = 'pfeil'; },
     (save) => { save.avatar = '<script>'; },
+    (save) => { save.lastHuntAt = Date.now() + 60_000; },
   ]) {
     const corrupted = structuredClone(source);
     mutation(corrupted);

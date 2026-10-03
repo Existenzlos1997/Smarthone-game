@@ -58,7 +58,8 @@ function validateSaveData(data) {
       && (!data.collection.includes(cardId) || getCardById(cardId).type === 'spell'))) {
     throw new Error('Festungswachen sind ungültig.');
   }
-  if (data.lastHuntAt !== null && (!Number.isSafeInteger(data.lastHuntAt) || data.lastHuntAt < 0)) {
+  if (data.lastHuntAt !== null
+    && (!Number.isSafeInteger(data.lastHuntAt) || data.lastHuntAt < 0 || data.lastHuntAt > Date.now())) {
     throw new Error('Jagdzeitpunkt ist ungültig.');
   }
   if (!isRecord(data.battleStats) || COUNTERS.some((key) => !isCount(data.battleStats[key]))) {
