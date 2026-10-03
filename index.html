@@ -22,7 +22,7 @@
       </div>
       <div class="topbar-icons">
         <button class="icon-btn" id="btn-bell" title="Benachrichtigungen" aria-label="Benachrichtigungen">
-          ♧<span class="badge" id="menu-notif-badge" hidden></span>
+          🔔<span class="badge" id="menu-notif-badge" hidden></span>
         </button>
         <button class="icon-btn" id="btn-share" title="Teilen" aria-label="Spiel teilen">↗</button>
       </div>
@@ -35,13 +35,13 @@
         <span class="resource-divider"></span>
         <span class="resource-next"><strong id="menu-next-threshold">150</strong><small>NÄCHSTE ARENA</small></span>
       </div>
-      <div class="resource-pill"><span class="resource-symbol coin-symbol">◉</span><strong id="menu-coins">0</strong><button class="plus-btn" data-currency="coins" aria-label="Münzen ansehen">+</button></div>
-      <div class="resource-pill"><span class="resource-symbol gem-symbol">◆</span><strong id="menu-gems">0</strong><button class="plus-btn" data-currency="gems" aria-label="Edelsteine ansehen">+</button></div>
+      <div class="resource-pill"><span class="resource-symbol coin-symbol">◉</span><strong id="menu-coins">0</strong><button class="plus-btn" data-currency="coins" data-nav="screen-shop" aria-label="Münzen ansehen">+</button></div>
+      <div class="resource-pill"><span class="resource-symbol gem-symbol">◆</span><strong id="menu-gems">0</strong><button class="plus-btn" data-currency="gems" data-nav="screen-shop" aria-label="Edelsteine ansehen">+</button></div>
     </div>
 
     <div class="player-progress">
       <span class="progress-label">STUFE <strong id="menu-level-label">1</strong></span>
-      <div class="xp-track" role="progressbar" aria-label="Erfahrung bis zum nächsten Level" aria-valuemin="0" aria-valuemax="100">
+      <div class="xp-track" role="progressbar" aria-label="Erfahrung bis zum nächsten Level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <div class="xp-fill" id="menu-xp-fill"></div>
       </div>
       <span class="xp-count" id="menu-xp-count">0 / 100 XP</span>
@@ -115,7 +115,7 @@
     <header class="subbar">
       <h2>Shop</h2>
     </header>
-    <p class="hint placeholder-msg">🛒 Der Shop ist noch im Bau. Schau bald wieder vorbei!</p>
+    <p class="hint placeholder-msg">🛒 Der Handelsposten ist noch im Aufbau. Münzen und Edelsteine können hier noch nicht ausgegeben werden.</p>
   </section>
 
   <!-- ===================== ALLIANZ (Platzhalter) ===================== -->

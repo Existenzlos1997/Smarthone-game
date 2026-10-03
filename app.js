@@ -103,9 +103,6 @@ document.getElementById('btn-share').addEventListener('click', onShare);
 document.getElementById('btn-bell').addEventListener('click', () => {
   alert(player.canHuntToday() ? 'Deine tägliche Jagd wartet auf dich! 🎯' : 'Keine neuen Benachrichtigungen.');
 });
-document.querySelectorAll('.plus-btn').forEach((btn) => btn.addEventListener('click', () => {
-  showScreen('screen-shop');
-}));
 
 function onShare() {
   const url = window.location.href;
@@ -535,6 +532,7 @@ function runBattle(ctx, canvas) {
 function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   const durationMs = BATTLE_VISUAL_DURATION_MS;
   const start = performance.now();
+  const battleDuration = result.durationSeconds;
   const playerHealth = document.getElementById('player-fortress-health');
   const enemyHealth = document.getElementById('enemy-fortress-health');
   const timer = document.getElementById('battle-timer');
@@ -546,7 +544,6 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
     drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck);
     const playerHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.playerFortressHp, progress) / FORTRESS_HP * 100);
     const enemyHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.enemyFortressHp, progress) / FORTRESS_HP * 100);
-    const battleDuration = Number.isFinite(result.durationSeconds) ? result.durationSeconds : durationMs / 1000;
     const timerText = `${Math.ceil((1 - progress) * battleDuration)}s`;
     if (playerHp !== previousPlayerHp) playerHealth.textContent = `${playerHp}%`;
     if (enemyHp !== previousEnemyHp) enemyHealth.textContent = `${enemyHp}%`;
@@ -569,6 +566,7 @@ function interpolateFortressHp(startHp, endHp, progress) {
 }
 
 function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
+  ctx.save();
   const { width, height } = canvas;
   const groundY = height * 0.69;
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
@@ -648,6 +646,7 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
     ctx.textAlign = 'center';
     ctx.fillText('✦', width * 0.5, groundY - height * 0.12);
   }
+  ctx.restore();
 }
 
 function drawHill(ctx, width, groundY, heightRatio, color, offset) {
@@ -694,7 +693,7 @@ function drawFortress(ctx, x, y, color, hp) {
 
   ctx.fillStyle = '#28233c';
   ctx.beginPath();
-  ctx.roundRect(x + 37, y + 101, 28, 49, 14);
+  roundedRectPath(ctx, x + 37, y + 101, 28, 49, 14);
   ctx.fill();
   ctx.fillStyle = '#e6c477';
   ctx.beginPath();
@@ -704,20 +703,39 @@ function drawFortress(ctx, x, y, color, hp) {
   const barWidth = towerWidth + 28;
   ctx.fillStyle = '#251e3e';
   ctx.beginPath();
-  ctx.roundRect(x, y - 28, barWidth, 13, 7);
+  roundedRectPath(ctx, x, y - 28, barWidth, 13, 7);
   ctx.fill();
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.roundRect(x, y - 28, barWidth * Math.max(0, hp / FORTRESS_HP), 13, 7);
+  roundedRectPath(ctx, x, y - 28, barWidth * Math.max(0, hp / FORTRESS_HP), 13, 7);
   ctx.fill();
   ctx.strokeStyle = '#ffffffa6';
   ctx.lineWidth = 2;
   ctx.stroke();
 }
 
+function roundedRectPath(ctx, x, y, width, height, radius) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
 function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
+  ctx.save();
   const icons = deck.map((cardId) => CARD_ART[cardId] ?? '⚔️');
-  if (icons.length === 0) return;
+  if (icons.length === 0) {
+    ctx.restore();
+    return;
+  }
   icons.forEach((icon, index) => {
     const startX = isPlayer ? width * 0.182 + index * width * 0.008 : width * 0.818 - index * width * 0.008;
     const endX = isPlayer ? width * 0.479 - index * width * 0.0125 : width * 0.521 + index * width * 0.0125;
@@ -737,6 +755,7 @@ function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
     ctx.fillStyle = isPlayer ? '#5de1b8' : '#ff7080';
     ctx.fillRect(x - 17, y - 39, 34, 4);
   });
+  ctx.restore();
 }
 
 renderMenu();
