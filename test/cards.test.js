@@ -17,6 +17,7 @@ test('card levels increase combat stats without changing base card definitions',
   assert.equal(levelThree.hp, 144);
   assert.equal(levelThree.damage, 24);
   assert.equal(getCardAtLevel('heil', 2).amount, 88);
+  assert.equal(getCardAtLevel('frost', 2).duration, 4.4);
   assert.equal(base.hp, 120);
   assert.throws(() => getCardAtLevel('swordsman', 0));
 });

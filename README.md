@@ -42,8 +42,8 @@ bei jedem Push nach `main`.
   und von selbst kämpfen, bis eine der beiden Festungen fällt. Sieg/Niederlage
   verändert die Pokalzahl und damit die Arena.
 - **Untere Navigationsleiste**: Shop, Karten (Deck-Builder), Kampf (Festung),
-  Jagd und Allianz — Shop und Allianz sind aktuell Platzhalter für künftige
-  Features.
+  Jagd und Allianz. Im Shop lassen sich Karten mit Münzen bis Stufe 10 aufwerten;
+  jede Stufe verbessert ihre Kampfwerte. Allianzen sind noch ein Platzhalter.
 
 ## Projektstruktur
 

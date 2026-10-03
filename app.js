@@ -568,9 +568,16 @@ function renderShopScreen() {
     const name = document.createElement('strong');
     name.textContent = card.name;
     const levelLabel = document.createElement('span');
+    const upgrade = card.type === 'monster'
+      ? 'Leben/Schaden +10%'
+      : card.effect === 'heal'
+        ? 'Heilung +10%'
+        : ['slow', 'haste'].includes(card.effect)
+          ? 'Wirkdauer +10%'
+          : 'Zauberschaden +10%';
     levelLabel.textContent = cost === null
       ? `Maximalstufe ${MAX_CARD_LEVEL}`
-      : `Stufe ${level} → ${level + 1} · Werte +10%`;
+      : `Stufe ${level} → ${level + 1} · ${upgrade}`;
     details.append(name, levelLabel);
     const button = document.createElement('button');
     button.type = 'button';

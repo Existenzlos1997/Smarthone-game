@@ -50,6 +50,7 @@ export function getCardAtLevel(id, level = 1) {
     ...(card.hp === undefined ? {} : { hp: Math.round(card.hp * multiplier) }),
     ...(card.damage === undefined ? {} : { damage: Math.round(card.damage * multiplier) }),
     ...(card.amount === undefined ? {} : { amount: Math.round(card.amount * multiplier) }),
+    ...(card.duration === undefined ? {} : { duration: card.duration * multiplier }),
   };
 }
 
