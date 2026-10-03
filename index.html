@@ -108,11 +108,26 @@
 
   <!-- ===================== KAMPF (2D Lane Auto-Battle) ===================== -->
   <section id="screen-battle" class="screen">
-    <header class="subbar">
+    <header class="battle-topbar">
       <button class="btn btn-back" data-back>← Zurück</button>
-      <h2>Kampf</h2>
+      <div>
+        <span class="battle-kicker">ARENA-KAMPF</span>
+        <h2 id="battle-arena-name">Heimatdorf</h2>
+      </div>
+      <div class="battle-timer" id="battle-timer" aria-live="polite">Bereit</div>
     </header>
-    <canvas id="battle-canvas" width="720" height="220"></canvas>
+    <div class="battle-scoreboard" aria-label="Festungsstärke">
+      <div class="fortress-health player-health"><span>🛡 Deine Festung</span><strong id="player-fortress-health">100%</strong></div>
+      <div class="fortress-health enemy-health"><span>🏰 Gegner</span><strong id="enemy-fortress-health">100%</strong></div>
+    </div>
+    <canvas id="battle-canvas" width="960" height="480" aria-label="2D-Kampfarena mit zwei Festungen und kämpfenden Truppen"></canvas>
+    <section class="battle-deck-panel" aria-label="Kampfdeck">
+      <div class="battle-deck-heading">
+        <div><span class="battle-kicker">DEIN DECK</span><h3>Truppen im Einsatz</h3></div>
+        <span class="deck-count" id="battle-deck-count">0 / 4</span>
+      </div>
+      <div class="battle-hand" id="battle-hand"></div>
+    </section>
     <div class="battle-controls">
       <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
       <p id="battle-result"></p>
