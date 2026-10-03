@@ -1,4 +1,4 @@
-import { getCardById } from './cards.js';
+import { getCardAtLevel, getCardById } from './cards.js';
 import { FORTRESS_HP, LANE_LENGTH } from './battle.js';
 
 export const MAX_ENERGY = 10;
@@ -9,8 +9,8 @@ const ENEMY_ENERGY_PER_SECOND = 1;
 const ATTACK_INTERVAL = 1;
 const SIMULATION_STEP = 0.05;
 
-function makeUnit(owner, cardId, x, stationary = false) {
-  const card = getCardById(cardId);
+function makeUnit(owner, cardId, x, stationary = false, cardLevels = {}) {
+  const card = getCardAtLevel(cardId, cardLevels[cardId] ?? 1);
   if (card.type === 'spell') throw new Error(`Spell cards cannot be deployed as units: ${cardId}`);
   return {
     owner,
@@ -28,9 +28,19 @@ function makeUnit(owner, cardId, x, stationary = false) {
 }
 
 export class LiveBattle {
-  constructor({ playerDeck, enemyDeck, playerDefenders = [], enemyDefenders = [], rng = Math.random } = {}) {
+  constructor({
+    playerDeck,
+    enemyDeck,
+    playerDefenders = [],
+    enemyDefenders = [],
+    playerCardLevels = {},
+    enemyCardLevels = {},
+    rng = Math.random,
+  } = {}) {
     this.#validateDeck(playerDeck, 'playerDeck');
     this.#validateDeck(enemyDeck, 'enemyDeck');
+    this.playerCardLevels = playerCardLevels;
+    this.enemyCardLevels = enemyCardLevels;
     this.playerQueue = [...playerDeck];
     this.enemyQueue = [...enemyDeck];
     this.playerEnergy = STARTING_ENERGY;
@@ -41,8 +51,8 @@ export class LiveBattle {
     this.enemyDeployIn = 1.5;
     this.rng = rng;
     this.units = [
-      ...playerDefenders.filter(Boolean).map((id) => makeUnit('player', id, 0.35, true)),
-      ...enemyDefenders.filter(Boolean).map((id) => makeUnit('enemy', id, LANE_LENGTH - 0.35, true)),
+      ...playerDefenders.filter(Boolean).map((id) => makeUnit('player', id, 0.35, true, playerCardLevels)),
+      ...enemyDefenders.filter(Boolean).map((id) => makeUnit('enemy', id, LANE_LENGTH - 0.35, true, enemyCardLevels)),
     ];
     this.effects = [];
     this.winner = null;
@@ -61,7 +71,7 @@ export class LiveBattle {
     if (card.type === 'spell') return this.selectSpell(handIndex);
     if (this.playerEnergy < card.cost) return { ok: false, reason: 'energy' };
     this.playerEnergy -= card.cost;
-    this.units.push(makeUnit('player', cardId, 1.4));
+    this.units.push(makeUnit('player', cardId, 1.4, false, this.playerCardLevels));
     this.#rotateCard(handIndex, cardId);
     return { ok: true, cardId };
   }
@@ -87,7 +97,7 @@ export class LiveBattle {
     if (this.winner) return { ok: false, reason: 'finished' };
     if (!Number.isFinite(x) || x < 0 || x > LANE_LENGTH) return { ok: false, reason: 'invalid-target' };
     const cardId = this.playerQueue[index];
-    const spell = getCardById(cardId);
+    const spell = getCardAtLevel(cardId, this.playerCardLevels[cardId] ?? 1);
     if (this.playerEnergy < spell.cost) return { ok: false, reason: 'energy' };
     const ownSide = x <= LANE_LENGTH / 2;
     if (spell.effect === 'heal' || spell.effect === 'haste') {
@@ -197,7 +207,7 @@ export class LiveBattle {
     if (!affordable.length) return;
     const choice = affordable[Math.floor(this.rng() * affordable.length)];
     this.enemyEnergy -= choice.cost;
-    this.units.push(makeUnit('enemy', choice.cardId, LANE_LENGTH - 1.4));
+    this.units.push(makeUnit('enemy', choice.cardId, LANE_LENGTH - 1.4, false, this.enemyCardLevels));
     this.enemyQueue.splice(choice.index, 1);
     this.enemyQueue.push(choice.cardId);
   }

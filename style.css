@@ -227,6 +227,20 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 .card .stats { grid-column: 1 / -1; color: var(--muted-strong); font-size: .6rem; }
 .screen > h3 { margin: 18px 0 9px; color: #edcf8e; font-size: .84rem; }
 
+.shop-wallet { margin: 10px 0; padding: 12px; border: 1px solid #73866c; border-radius: 12px; background: #293c38; color: #f1dda8; font-weight: 800; }
+.shop-result { min-height: 1.3em; margin: 6px 0; color: #bdf2cf; font-size: .78rem; font-weight: 700; }
+.shop-offers { display: grid; gap: 8px; }
+.shop-offer { min-width: 0; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px; border: 1px solid #68756e; border-left: 3px solid #a8b8a3; border-radius: 13px; background: linear-gradient(145deg, #35464a, #26343a); }
+.shop-offer.rarity-rare { border-left-color: #83c8c0; }
+.shop-offer.rarity-epic { border-left-color: #c59fce; }
+.shop-offer.rarity-legendary { border-left-color: #e7c470; }
+.shop-card-image { width: 46px; height: 50px; object-fit: contain; }
+.shop-offer-details { min-width: 0; display: grid; gap: 4px; font-size: .76rem; }
+.shop-offer-details strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shop-offer-details span { color: var(--muted-strong); font-size: .63rem; }
+.shop-upgrade { min-height: 38px; padding: 7px 9px; font-size: .63rem; white-space: nowrap; }
+.shop-upgrade:disabled { filter: brightness(.62); cursor: default; }
+
 .hunt-progress { color: var(--accent-2); font-weight: 800; text-align: center; }
 #hunt-canvas { width: 100%; max-width: 420px; aspect-ratio: 1; display: block; margin: 0 auto; border: 1px solid #6d8278; border-radius: 15px; background: radial-gradient(circle at 50% 40%, #426450, #1b302e 75%); touch-action: manipulation; cursor: crosshair; }
 #hunt-result { min-height: 1.4em; font-weight: 700; text-align: center; }

@@ -39,6 +39,20 @@ export function getCardById(id) {
   return card;
 }
 
+export function getCardAtLevel(id, level = 1) {
+  if (!Number.isInteger(level) || level < 1) {
+    throw new Error(`Invalid card level: ${level}`);
+  }
+  const card = getCardById(id);
+  const multiplier = 1 + (level - 1) * 0.1;
+  return {
+    ...card,
+    ...(card.hp === undefined ? {} : { hp: Math.round(card.hp * multiplier) }),
+    ...(card.damage === undefined ? {} : { damage: Math.round(card.damage * multiplier) }),
+    ...(card.amount === undefined ? {} : { amount: Math.round(card.amount * multiplier) }),
+  };
+}
+
 const RARITY_WEIGHTS = {
   [RARITY.COMMON]: 60,
   [RARITY.RARE]: 27,

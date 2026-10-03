@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Player } from '../src/player.js';
+import { MAX_CARD_LEVEL, Player } from '../src/player.js';
 
 test('starts at level 1 with starter cards', () => {
   const player = new Player();
@@ -59,6 +59,25 @@ test('finding an already-owned card upgrades it instead of duplicating it', () =
   assert.equal(second.leveledUp, true);
   assert.equal(player.getCardLevel(first.card.id), 3);
   assert.equal(player.collection.filter((id) => id === first.card.id).length, 1);
+});
+
+test('card upgrades spend increasing coin costs and stop at the maximum level', () => {
+  const player = new Player();
+  player.coins = 250;
+  assert.equal(player.getCardUpgradeCost('swordsman'), 50);
+  assert.deepEqual(player.upgradeCard('swordsman'), { cardId: 'swordsman', level: 2, cost: 50 });
+  assert.equal(player.coins, 200);
+  assert.equal(player.getCardUpgradeCost('swordsman'), 100);
+  player.upgradeCard('swordsman');
+  assert.equal(player.getCardLevel('swordsman'), 3);
+  assert.equal(player.coins, 100);
+  assert.throws(() => player.upgradeCard('swordsman'), /Not enough coins/);
+  assert.equal(player.getCardLevel('swordsman'), 3);
+  assert.throws(() => player.getCardUpgradeCost('not-owned'));
+
+  player.cardLevels.archer = MAX_CARD_LEVEL;
+  assert.equal(player.getCardUpgradeCost('archer'), null);
+  assert.throws(() => player.upgradeCard('archer'), /maximum level/);
 });
 
 test('recordBattleOutcome adjusts trophies and never goes below zero', () => {

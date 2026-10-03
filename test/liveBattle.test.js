@@ -20,9 +20,24 @@ test('playing a card spends energy and rotates it to the end of the deck', () =>
   assert.equal(battle.units.filter((unit) => unit.owner === 'player').length, 1);
 });
 
+test('player troop cards use their owned upgrade levels in combat', () => {
+  const battle = new LiveBattle({
+    playerDeck: deck,
+    enemyDeck: [...deck].reverse(),
+    playerCardLevels: { swordsman: 3 },
+  });
+  battle.playCard(0);
+  assert.equal(battle.units[0].card.hp, 144);
+  assert.equal(battle.units[0].card.damage, 24);
+});
+
 test('spell cards require a target and rotate only after a valid cast', () => {
   const spellDeck = ['pfeil', ...deck.slice(0, 7)];
-  const battle = new LiveBattle({ playerDeck: spellDeck, enemyDeck: [...deck].reverse() });
+  const battle = new LiveBattle({
+    playerDeck: spellDeck,
+    enemyDeck: [...deck].reverse(),
+    playerCardLevels: { pfeil: 2 },
+  });
   battle.playerEnergy = 10;
   battle.step(1.5);
   assert.equal(battle.playCard(0).targeting, true);
@@ -32,7 +47,7 @@ test('spell cards require a target and rotate only after a valid cast', () => {
   enemy.x = 12;
   const cast = battle.castSpellAt(12);
   assert.equal(cast.ok, true);
-  assert.equal(enemy.hp, enemy.card.hp - 45);
+  assert.equal(enemy.hp, enemy.card.hp - 50);
   assert.equal(battle.playerEnergy, 7);
   assert.equal(battle.playerQueue.at(-1), 'pfeil');
   assert.ok(battle.effects.some((effect) => effect.kind === 'spell-burst' && effect.spellId === 'pfeil'));

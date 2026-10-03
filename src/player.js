@@ -9,6 +9,7 @@ const MAX_CARD_LEVEL = 10;
 const STARTER_GEMS = 50;
 const TROPHIES_PER_WIN = 30;
 const TROPHIES_PER_LOSS = 10;
+const CARD_UPGRADE_COST_PER_LEVEL = 50;
 
 /**
  * Holds all persistent progression for a single player: level/XP, trophies
@@ -36,6 +37,24 @@ export class Player {
   /** The upgrade level of an owned card (defaults to 1). */
   getCardLevel(cardId) {
     return this.cardLevels[cardId] ?? 1;
+  }
+
+  getCardUpgradeCost(cardId) {
+    if (!this.collection.includes(cardId)) {
+      throw new Error(`Card not in collection: ${cardId}`);
+    }
+    const level = this.getCardLevel(cardId);
+    if (level >= MAX_CARD_LEVEL) return null;
+    return level * CARD_UPGRADE_COST_PER_LEVEL;
+  }
+
+  upgradeCard(cardId) {
+    const cost = this.getCardUpgradeCost(cardId);
+    if (cost === null) throw new Error('Card is already at the maximum level');
+    if (this.coins < cost) throw new Error('Not enough coins to upgrade this card');
+    this.coins -= cost;
+    this.cardLevels[cardId] = this.getCardLevel(cardId) + 1;
+    return { cardId, level: this.cardLevels[cardId], cost };
   }
 
   /** Applies the trophy change for a finished battle (never below 0). */
@@ -140,4 +159,14 @@ export class Player {
   }
 }
 
-export { DECK_SIZE, FORTRESS_SLOTS, XP_PER_LEVEL, DAILY_HUNT_COOLDOWN_MS, MAX_CARD_LEVEL, STARTER_GEMS, TROPHIES_PER_WIN, TROPHIES_PER_LOSS };
+export {
+  DECK_SIZE,
+  FORTRESS_SLOTS,
+  XP_PER_LEVEL,
+  DAILY_HUNT_COOLDOWN_MS,
+  MAX_CARD_LEVEL,
+  CARD_UPGRADE_COST_PER_LEVEL,
+  STARTER_GEMS,
+  TROPHIES_PER_WIN,
+  TROPHIES_PER_LOSS,
+};

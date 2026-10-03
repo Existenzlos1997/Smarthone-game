@@ -1,5 +1,5 @@
-import { DECK_SIZE, Player } from './src/player.js';
-import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
+import { DECK_SIZE, MAX_CARD_LEVEL, Player } from './src/player.js';
+import { CARD_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
@@ -172,6 +172,7 @@ function showScreen(id) {
   navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === id));
   if (id === 'screen-fortress') renderFortressScreen();
   if (id === 'screen-deck') renderDeckScreen();
+  if (id === 'screen-shop') renderShopScreen();
   if (id === 'screen-battle') renderBattleScreen();
   if (id === 'screen-menu') renderMenu();
   if (id === 'screen-hunt') startHuntSession();
@@ -429,12 +430,14 @@ function cardTile(cardId, { selected = false, onClick = null } = {}) {
   details.className = 'card-tile-details';
   const name = document.createElement('div');
   name.className = 'card-name';
-  name.textContent = card.name;
+  const level = player.getCardLevel(cardId);
+  name.textContent = `${card.name} · Lv. ${level}`;
   const stats = document.createElement('div');
   stats.className = 'stats';
+  const leveledCard = getCardAtLevel(cardId, level);
   stats.textContent = card.type === 'spell'
-    ? `✨ ${spellSummary(card)} · ${card.cost} Energie`
-    : `❤ ${card.hp} · ⚔ ${card.damage} · ➤ ${card.speed}`;
+    ? `✨ ${spellSummary(leveledCard)} · ${card.cost} Energie`
+    : `❤ ${leveledCard.hp} · ⚔ ${leveledCard.damage} · ➤ ${card.speed}`;
   details.append(name, stats);
   div.append(art, details);
   if (onClick) {
@@ -545,6 +548,50 @@ function renderDeckScreen() {
     });
   }
   redraw();
+}
+
+function renderShopScreen() {
+  const offersEl = document.getElementById('shop-offers');
+  document.getElementById('shop-coins').textContent = String(player.coins);
+  offersEl.replaceChildren();
+
+  player.collection.forEach((cardId) => {
+    const card = getCardById(cardId);
+    const level = player.getCardLevel(cardId);
+    const cost = player.getCardUpgradeCost(cardId);
+    const offer = document.createElement('article');
+    offer.className = `shop-offer rarity-${card.rarity}`;
+    const artwork = createMonsterArtwork(cardId, 'shop-card-image');
+    artwork.alt = '';
+    const details = document.createElement('div');
+    details.className = 'shop-offer-details';
+    const name = document.createElement('strong');
+    name.textContent = card.name;
+    const levelLabel = document.createElement('span');
+    levelLabel.textContent = cost === null
+      ? `Maximalstufe ${MAX_CARD_LEVEL}`
+      : `Stufe ${level} → ${level + 1} · Werte +10%`;
+    details.append(name, levelLabel);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-secondary shop-upgrade';
+    button.disabled = cost === null || player.coins < cost;
+    button.textContent = cost === null ? 'Max.' : `Aufwerten · ${cost} ◉`;
+    button.addEventListener('click', () => {
+      try {
+        const result = player.upgradeCard(cardId);
+        savePlayer();
+        renderShopScreen();
+        renderMenu();
+        document.getElementById('shop-result').textContent =
+          `${card.name} ist jetzt Stufe ${result.level}.`;
+      } catch (error) {
+        document.getElementById('shop-result').textContent = error.message;
+      }
+    });
+    offer.append(artwork, details, button);
+    offersEl.appendChild(offer);
+  });
 }
 
 // ---------------------------------------------------------------- battle screen
@@ -659,6 +706,7 @@ function runBattle(ctx, canvas) {
     enemyDeck: enemy.deck,
     playerDefenders: player.fortressSlots,
     enemyDefenders: enemy.defenders,
+    playerCardLevels: player.cardLevels,
   });
   const startBtn = document.getElementById('btn-start-battle');
   startBtn.hidden = true;
