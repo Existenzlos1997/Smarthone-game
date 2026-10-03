@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from '../src/player.js';
+import { formatBattleTime, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from '../src/player.js';
 
 test('starts at level 1 with starter cards', () => {
   const player = new Player();
@@ -10,6 +10,16 @@ test('starts at level 1 with starter cards', () => {
   assert.ok(player.collection.includes('pfeil'));
   assert.equal(player.deck.length, 8);
   assert.ok(!player.deck.includes('pfeil'));
+});
+
+test('career battle time formats total minutes and hours safely', () => {
+  assert.equal(formatBattleTime(0), '0 Min.');
+  assert.equal(formatBattleTime(59), '0 Min.');
+  assert.equal(formatBattleTime(60), '1 Min.');
+  assert.equal(formatBattleTime(3599), '59 Min.');
+  assert.equal(formatBattleTime(3600), '1 Std. 0 Min.');
+  assert.equal(formatBattleTime(7380), '2 Std. 3 Min.');
+  assert.equal(formatBattleTime(-60), '0 Min.');
 });
 
 test('player names are trimmed, bounded and reject empty or control-character values', () => {

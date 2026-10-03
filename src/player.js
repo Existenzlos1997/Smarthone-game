@@ -33,6 +33,14 @@ function utcDay(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
+export function formatBattleTime(totalSeconds) {
+  const seconds = Number.isSafeInteger(totalSeconds) && totalSeconds > 0 ? totalSeconds : 0;
+  const totalMinutes = Math.floor(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours ? `${hours} Std. ${minutes} Min.` : `${minutes} Min.`;
+}
+
 /**
  * Holds all persistent progression for a single player: level/XP, trophies
  * (which determine the current arena), gems/coins, the card collection

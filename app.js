@@ -1,4 +1,4 @@
-import { DECK_SIZE, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from './src/player.js';
+import { DECK_SIZE, formatBattleTime, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from './src/player.js';
 import { CARD_LIBRARY, SPELL_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
@@ -298,6 +298,7 @@ function renderMenu() {
     `${player.battleStats.wins} / ${player.battleStats.losses} / ${player.battleStats.draws}`;
   document.getElementById('career-cards-played').textContent = player.battleStats.cardsPlayed;
   document.getElementById('career-spells-cast').textContent = player.battleStats.spellsCast;
+  document.getElementById('career-battle-time').textContent = formatBattleTime(player.battleStats.durationSeconds);
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 
