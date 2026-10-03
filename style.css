@@ -365,14 +365,150 @@ body {
 
 .nav-btn-main.active .nav-icon { outline: 2px solid var(--accent); }
 
+.battle-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 0 4px 10px;
+}
+
+.battle-topbar > div:nth-child(2) { text-align: center; }
+.battle-topbar h2 { margin: 2px 0 0; font-size: 1.05rem; }
+.battle-topbar .btn-back { justify-self: start; }
+.battle-kicker { color: #d3b8ff; font-size: 0.64rem; font-weight: 900; letter-spacing: 0.16em; }
+.battle-timer {
+  justify-self: end;
+  min-width: 58px;
+  padding: 7px 10px;
+  border: 1px solid #ffffff32;
+  border-radius: 999px;
+  background: #12132bd9;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.battle-scoreboard {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px -28px;
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.fortress-health {
+  display: grid;
+  gap: 4px;
+  width: min(39%, 220px);
+  padding: 7px 10px;
+  border: 1px solid #ffffff45;
+  border-radius: 0 0 10px 10px;
+  background: #101427d9;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-shadow: 0 1px 2px #000;
+}
+
+.fortress-health strong { color: #d8ffe7; font-size: 0.76rem; }
+.enemy-health { text-align: right; }
+.enemy-health strong { color: #ffd9de; }
+
 #battle-canvas {
   width: 100%;
   height: auto;
-  background: linear-gradient(180deg, #16386b, #0c1f3d);
-  border-radius: 12px;
-  border: 2px solid #3a447a;
+  aspect-ratio: 2 / 1;
+  background: #271c56;
+  border: 1px solid #ffffff40;
+  border-radius: 16px;
+  box-shadow: 0 16px 34px #07091d80, inset 0 0 0 2px #ffffff12;
   display: block;
+  touch-action: manipulation;
 }
 
-.battle-controls { text-align: center; margin-top: 14px; }
-#battle-result { font-weight: 700; font-size: 1.1rem; }
+.battle-deck-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #ffffff24;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #29244beF, #14172feF);
+  box-shadow: 0 10px 26px #05071470;
+}
+
+.battle-deck-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.battle-deck-heading h3 { margin: 2px 0 0; font-size: 0.95rem; }
+.deck-count { color: #e0c4ff; font-weight: 800; font-size: 0.78rem; }
+.battle-hand { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+
+.battle-card {
+  min-width: 0;
+  min-height: 88px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+  padding: 8px 5px 7px;
+  border: 2px solid #f3c95c;
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse at 50% 20%, #9b65d6 0, #50348e 55%, #28265b 100%);
+  box-shadow: inset 0 0 0 1px #ffffff45, 0 4px 10px #07091d70;
+  text-align: center;
+}
+
+.battle-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #fff2, transparent 45%);
+  pointer-events: none;
+}
+
+.battle-card-icon { font-size: clamp(1.35rem, 7vw, 2rem); line-height: 1.05; filter: drop-shadow(0 2px 2px #160d38); }
+.battle-card-name { max-width: 100%; overflow: hidden; color: #fff; font-size: clamp(0.55rem, 2.7vw, 0.72rem); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.battle-card-cost {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #e5a8ff, #9d42e9);
+  box-shadow: 0 1px 4px #160d38;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.battle-card-empty {
+  border: 1px dashed #aaa5d05c;
+  border-radius: 13px;
+  background: #0d102454;
+  color: #aaaeca;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.battle-controls { text-align: center; margin-top: 12px; }
+.battle-controls .btn { width: min(100%, 420px); }
+#battle-result { min-height: 1.4em; margin: 8px 0 0; font-weight: 800; font-size: 1rem; }
+
+@media (max-width: 420px) {
+  .battle-topbar { gap: 4px; }
+  .battle-topbar h2 { font-size: 0.9rem; }
+  .battle-topbar .btn-back { font-size: 0.8rem; }
+  .battle-deck-panel { padding: 9px; }
+  .battle-hand { gap: 5px; }
+  .battle-card { min-height: 78px; padding-inline: 3px; }
+}

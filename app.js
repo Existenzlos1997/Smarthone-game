@@ -381,6 +381,27 @@ function renderDeckScreen() {
 }
 
 // ---------------------------------------------------------------- battle screen
+const BATTLE_CARD_ICONS = {
+  swordsman: '⚔️',
+  archer: '🏹',
+  shieldbearer: '🛡️',
+  knight: '🗡️',
+  mage: '🧙',
+  catapult: '🏹',
+  griffin: '🦅',
+  dragon: '🐉',
+};
+const BATTLE_CARD_COSTS = {
+  swordsman: 3,
+  archer: 3,
+  shieldbearer: 4,
+  knight: 4,
+  mage: 4,
+  catapult: 5,
+  griffin: 5,
+  dragon: 6,
+};
+
 function buildEnemyForce() {
   const pool = CARD_LIBRARY.filter((c) => c.rarity === RARITY.COMMON || c.rarity === RARITY.RARE);
   const pick = () => pool[Math.floor(Math.random() * pool.length)].id;
@@ -394,7 +415,13 @@ let lastResult = null;
 function renderBattleScreen() {
   const canvas = document.getElementById('battle-canvas');
   const ctx = canvas.getContext('2d');
-  drawIdleLane(ctx, canvas);
+  const { current } = getArenaProgress(player.trophies);
+  document.getElementById('battle-arena-name').textContent = current.name;
+  document.getElementById('battle-timer').textContent = 'Bereit';
+  document.getElementById('player-fortress-health').textContent = '100%';
+  document.getElementById('enemy-fortress-health').textContent = '100%';
+  renderBattleHand();
+  drawBattleScene(ctx, canvas, 0, null, player.deck, []);
   document.getElementById('battle-result').textContent = '';
   const startBtn = document.getElementById('btn-start-battle');
   startBtn.disabled = !player.isDeckReady();
@@ -402,11 +429,34 @@ function renderBattleScreen() {
   startBtn.onclick = () => runBattle(ctx, canvas);
 }
 
-function drawIdleLane(ctx, canvas) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#f2f4ff';
-  ctx.font = '14px sans-serif';
-  ctx.fillText('Bereit für den Kampf...', 20, canvas.height / 2);
+function renderBattleHand() {
+  const hand = document.getElementById('battle-hand');
+  hand.replaceChildren();
+  document.getElementById('battle-deck-count').textContent = `${player.deck.length} / 4`;
+  for (let index = 0; index < 4; index += 1) {
+    const cardId = player.deck[index];
+    const element = document.createElement('div');
+    if (!cardId) {
+      element.className = 'battle-card-empty';
+      element.textContent = `Karte ${index + 1}`;
+      hand.appendChild(element);
+      continue;
+    }
+    const card = getCardById(cardId);
+    element.className = `battle-card rarity-${card.rarity}`;
+    const cost = document.createElement('span');
+    cost.className = 'battle-card-cost';
+    cost.textContent = BATTLE_CARD_COSTS[cardId] ?? 3;
+    const icon = document.createElement('span');
+    icon.className = 'battle-card-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = BATTLE_CARD_ICONS[cardId] ?? '⚔️';
+    const name = document.createElement('span');
+    name.className = 'battle-card-name';
+    name.textContent = card.name;
+    element.append(cost, icon, name);
+    hand.appendChild(element);
+  }
 }
 
 function runBattle(ctx, canvas) {
@@ -418,8 +468,11 @@ function runBattle(ctx, canvas) {
     playerFortressDefenders: player.fortressSlots,
     enemyFortressDefenders: enemy.defenders,
   });
+  const startBtn = document.getElementById('btn-start-battle');
+  startBtn.disabled = true;
+  document.getElementById('battle-result').textContent = 'Die Truppen rücken vor …';
 
-  animateResult(ctx, canvas, lastResult, () => {
+  animateResult(ctx, canvas, lastResult, player.deck, enemy.deck, () => {
     const resultEl = document.getElementById('battle-result');
     player.recordBattleOutcome(lastResult.winner);
     if (lastResult.winner === 'player') {
@@ -433,29 +486,23 @@ function runBattle(ctx, canvas) {
       resultEl.textContent = 'Unentschieden.';
     }
     savePlayer();
+    startBtn.disabled = false;
+    startBtn.textContent = 'Noch einmal kämpfen';
+    renderMenu();
   });
 }
 
-// Simple visual playback: draws the two fortresses and animates the
-// fortress-hp bars draining towards the simulated outcome.
-function animateResult(ctx, canvas, result, onDone) {
-  const durationMs = 1500;
+function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
+  const durationMs = 3600;
   const start = performance.now();
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const playerHp = FORTRESS_HP - (FORTRESS_HP - result.playerFortressHp) * progress;
-    const enemyHp = FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * progress;
-
-    drawFortress(ctx, 20, playerHp, '#4dd9ff');
-    drawFortress(ctx, canvas.width - 60, enemyHp, '#ff5f6d');
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height - 30);
-    ctx.lineTo(canvas.width, canvas.height - 30);
-    ctx.stroke();
+    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck);
+    const playerHp = Math.round((FORTRESS_HP - (FORTRESS_HP - result.playerFortressHp) * progress) / FORTRESS_HP * 100);
+    const enemyHp = Math.round((FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * progress) / FORTRESS_HP * 100);
+    document.getElementById('player-fortress-health').textContent = `${playerHp}%`;
+    document.getElementById('enemy-fortress-health').textContent = `${enemyHp}%`;
+    document.getElementById('battle-timer').textContent = `${Math.ceil((1 - progress) * result.durationSeconds)}s`;
 
     if (progress < 1) {
       requestAnimationFrame(frame);
@@ -466,16 +513,175 @@ function animateResult(ctx, canvas, result, onDone) {
   requestAnimationFrame(frame);
 }
 
-function drawFortress(ctx, x, hp, color) {
-  const maxBarHeight = 150;
-  const barHeight = Math.max(0, (hp / FORTRESS_HP) * maxBarHeight);
+function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
+  const { width, height } = canvas;
+  const groundY = height * 0.69;
+  const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+  sky.addColorStop(0, '#35205f');
+  sky.addColorStop(0.58, '#9a4f91');
+  sky.addColorStop(1, '#f08c91');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  for (let i = 0; i < 42; i += 1) {
+    const x = ((i * 173 + 31) % 997) / 997 * width;
+    const y = ((i * 97 + 17) % 251) / 251 * groundY * 0.62;
+    ctx.globalAlpha = 0.28 + ((i * 13) % 7) / 10;
+    ctx.fillStyle = '#fff5db';
+    ctx.beginPath();
+    ctx.arc(x, y, i % 5 === 0 ? 2 : 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowColor = '#fff1bd';
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = '#fff0c4';
+  ctx.beginPath();
+  ctx.arc(width * 0.78, height * 0.17, height * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  drawHill(ctx, width, groundY, 0.53, '#55336f', 0);
+  drawHill(ctx, width, groundY, 0.62, '#372755', 1);
+  ctx.fillStyle = '#173c48';
+  ctx.fillRect(0, groundY, width, height - groundY);
+  const grass = ctx.createLinearGradient(0, groundY, 0, height);
+  grass.addColorStop(0, '#315e52');
+  grass.addColorStop(1, '#14293a');
+  ctx.fillStyle = grass;
+  ctx.fillRect(0, groundY + 5, width, height - groundY);
+  ctx.fillStyle = '#95bf87';
+  ctx.fillRect(0, groundY, width, 5);
+
+  ctx.fillStyle = '#c3ab75';
+  ctx.globalAlpha = 0.75;
+  ctx.fillRect(width * 0.42, groundY - 7, width * 0.16, 18);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#ead28e';
+  ctx.fillRect(width * 0.47, groundY - 9, width * 0.06, 21);
+
+  for (let i = 0; i < 26; i += 1) {
+    const x = (i * 89 + 24) % width;
+    const y = groundY + 27 + ((i * 31) % Math.max(1, height - groundY - 50));
+    ctx.fillStyle = i % 2 ? '#b4c879' : '#e1c274';
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.arc(x, y, i % 4 === 0 ? 2.5 : 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  const hpProgress = progress;
+  const playerHp = result ? FORTRESS_HP - (FORTRESS_HP - result.playerFortressHp) * hpProgress : FORTRESS_HP;
+  const enemyHp = result ? FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * hpProgress : FORTRESS_HP;
+  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#45d9b0', playerHp);
+  ctx.save();
+  ctx.translate(width, 0);
+  ctx.scale(-1, 1);
+  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#ff667b', enemyHp);
+  ctx.restore();
+
+  const advance = Math.min(1, progress / 0.72);
+  drawTroops(ctx, playerDeck, advance, true, groundY);
+  drawTroops(ctx, enemyDeck, advance, false, groundY);
+
+  if (progress > 0.68 && progress < 0.96) {
+    const pulse = 0.5 + Math.sin(progress * 90) * 0.5;
+    ctx.fillStyle = `rgba(255, 230, 141, ${pulse})`;
+    ctx.font = '900 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✦', width * 0.5, groundY - height * 0.12);
+  }
+}
+
+function drawHill(ctx, width, groundY, heightRatio, color, offset) {
   ctx.fillStyle = color;
-  ctx.fillRect(x, 190 - barHeight, 40, barHeight);
-  ctx.strokeStyle = '#fff';
-  ctx.strokeRect(x, 40, 40, 150);
-  ctx.fillStyle = '#f2f4ff';
-  ctx.font = '12px sans-serif';
-  ctx.fillText(Math.max(0, Math.round(hp)), x, 205);
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  for (let x = 0; x <= width; x += 4) {
+    const wave = Math.sin(x / 105 + offset) * 18 + Math.sin(x / 47 + offset * 2) * 7;
+    const y = groundY - groundY * (1 - heightRatio) + wave;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(width, groundY);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawFortress(ctx, x, y, color, hp) {
+  const towerWidth = 94;
+  const towerHeight = 150;
+  ctx.save();
+  ctx.shadowColor = '#08091c99';
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 8;
+  ctx.fillStyle = '#55476f';
+  ctx.fillRect(x + 14, y + 58, towerWidth, towerHeight - 58);
+  ctx.fillStyle = '#70628a';
+  ctx.fillRect(x, y + 32, towerWidth + 28, towerHeight - 32);
+  ctx.fillRect(x + 9, y + 5, 30, 55);
+  ctx.fillRect(x + 61, y + 5, 30, 55);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 35);
+  ctx.lineTo(x + 24, y - 10);
+  ctx.lineTo(x + 53, y + 35);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x + 48, y + 35);
+  ctx.lineTo(x + 76, y - 10);
+  ctx.lineTo(x + 105, y + 35);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = '#28233c';
+  ctx.beginPath();
+  ctx.roundRect(x + 37, y + 101, 28, 49, 14);
+  ctx.fill();
+  ctx.fillStyle = '#e6c477';
+  ctx.beginPath();
+  ctx.arc(x + 51, y + 137, 7, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  const barWidth = towerWidth + 28;
+  ctx.fillStyle = '#251e3e';
+  ctx.beginPath();
+  ctx.roundRect(x, y - 28, barWidth, 13, 7);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y - 28, barWidth * Math.max(0, hp / FORTRESS_HP), 13, 7);
+  ctx.fill();
+  ctx.strokeStyle = '#ffffffa6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawTroops(ctx, deck, progress, isPlayer, groundY) {
+  const icons = deck.map((cardId) => BATTLE_CARD_ICONS[cardId] ?? '⚔️');
+  if (icons.length === 0) return;
+  icons.forEach((icon, index) => {
+    const startX = isPlayer ? 175 + index * 8 : 785 - index * 8;
+    const endX = isPlayer ? 460 - index * 12 : 500 + index * 12;
+    const x = startX + (endX - startX) * progress;
+    const y = groundY - 22 - (index % 2) * 17;
+    ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 5, 24, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = '34px "Segoe UI Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#17102c';
+    ctx.shadowBlur = 6;
+    ctx.fillText(icon, x, y - 13);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = isPlayer ? '#5de1b8' : '#ff7080';
+    ctx.fillRect(x - 17, y - 39, 34, 4);
+  });
 }
 
 renderMenu();
