@@ -86,6 +86,7 @@ function loadPlayer() {
       player.restoreWinStreaks({ current: data.winStreak, best: data.bestWinStreak });
       player.restoreArenaRewards(data.arenaRewardsClaimed);
       player.restoreBattleStats(data.battleStats);
+      player.restoreAchievementClaims(data.achievementRewardsClaimed);
       player.collection = [...new Set([...player.collection, ...(data.collection ?? [])])];
       player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
@@ -119,6 +120,7 @@ function savePlayer() {
     bestWinStreak: player.bestWinStreak,
     arenaRewardsClaimed: player.arenaRewardsClaimed,
     battleStats: player.battleStats,
+    achievementRewardsClaimed: player.achievementRewardsClaimed,
     collection: player.collection,
     cardLevels: player.cardLevels,
     fortressSlots: player.fortressSlots,
@@ -272,6 +274,7 @@ function renderMenu() {
     : `Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`;
 
   renderDailyQuests();
+  renderAchievements();
   renderBattleHistory();
 
   const collectionEl = document.getElementById('menu-collection');
@@ -350,6 +353,41 @@ function renderDailyQuests() {
     });
     card.append(details, claim);
     questsEl.appendChild(card);
+  }
+}
+
+function renderAchievements() {
+  const achievementsEl = document.getElementById('achievements');
+  if (!achievementsEl) return;
+  achievementsEl.replaceChildren();
+  for (const achievement of player.getAchievements()) {
+    const card = document.createElement('article');
+    card.className = `daily-quest${achievement.completed ? ' completed' : ''}`;
+    const details = document.createElement('div');
+    details.className = 'daily-quest-details';
+    const title = document.createElement('strong');
+    title.textContent = achievement.label;
+    const description = document.createElement('span');
+    description.textContent = achievement.description;
+    const progress = document.createElement('span');
+    progress.textContent = `${achievement.progress}/${achievement.target} · Belohnung ${achievement.reward} ◉`;
+    details.append(title, description, progress);
+    const claim = document.createElement('button');
+    claim.type = 'button';
+    claim.className = 'btn btn-secondary quest-claim';
+    claim.disabled = !achievement.completed || achievement.claimed;
+    claim.textContent = achievement.claimed ? 'Erhalten' : 'Abholen';
+    claim.addEventListener('click', () => {
+      try {
+        player.claimAchievement(achievement.id);
+        savePlayer();
+        renderMenu();
+      } catch (error) {
+        document.getElementById('achievement-result').textContent = error.message;
+      }
+    });
+    card.append(details, claim);
+    achievementsEl.appendChild(card);
   }
 }
 

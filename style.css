@@ -203,6 +203,7 @@ body {
 .career-stats > div { min-width: 0; display: grid; gap: 3px; padding: 10px; border: 1px solid #596e63; border-radius: 12px; background: linear-gradient(120deg, #293b39, #26343a); }
 .career-stats strong { color: #f2d38e; font-size: .92rem; }
 .career-stats span { overflow: hidden; color: #c3cfbf; font-size: .63rem; text-overflow: ellipsis; white-space: nowrap; }
+.achievements-section { margin-top: 18px; }
 
 .collection-section { margin-top: 19px; }
 .battle-history-section { margin-top: 18px; }

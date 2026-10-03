@@ -192,6 +192,31 @@ test('career battle statistics restore only non-negative safe integer counters',
   assert.equal(player.battleStats.wins, 4);
 });
 
+test('lifetime achievements track career stats and award each reward once', () => {
+  const player = new Player();
+  player.restoreAchievementClaims(['first-battle', 'unknown', 'first-battle']);
+  assert.equal(player.achievementRewardsClaimed.length, 1);
+  assert.throws(() => player.claimAchievement('not-an-achievement'), /Unknown achievement/);
+  assert.throws(() => player.claimAchievement('veteran'), /not complete/);
+
+  player.recordBattle({ result: 'player', cardsPlayed: 5, spellsCast: 1 });
+  const firstBattle = player.getAchievements().find(({ id }) => id === 'first-battle');
+  assert.equal(firstBattle.completed, true);
+  assert.equal(firstBattle.claimed, true);
+  assert.equal(player.claimAchievement('first-battle').coins, 50);
+  assert.throws(() => player.claimAchievement('first-battle'), /already claimed/);
+
+  for (let index = 0; index < 9; index += 1) {
+    player.recordBattle({ result: index < 8 ? 'player' : 'enemy', cardsPlayed: 11, spellsCast: 3 });
+  }
+  const achievements = player.getAchievements();
+  assert.equal(achievements.find(({ id }) => id === 'veteran').completed, true);
+  assert.equal(achievements.find(({ id }) => id === 'champion').progress, 9);
+  assert.equal(achievements.find(({ id }) => id === 'card-master').completed, true);
+  assert.equal(achievements.find(({ id }) => id === 'spell-master').completed, true);
+  assert.equal(player.claimAchievement('veteran').coins, 150);
+});
+
 test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
   const player = new Player();
   player.recordBattleOutcome('player');

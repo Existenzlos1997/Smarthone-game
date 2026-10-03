@@ -19,6 +19,13 @@ export const DAILY_QUESTS = [
   { id: 'play-cards', label: 'Spiele 5 Karten aus', target: 5, reward: 80 },
   { id: 'cast-spells', label: 'Wirke 2 Zauber', target: 2, reward: 60 },
 ];
+export const ACHIEVEMENTS = [
+  { id: 'first-battle', label: 'Erster Schritt', description: 'Schließe deinen ersten Arenakampf ab.', stat: 'battles', target: 1, reward: 50 },
+  { id: 'veteran', label: 'Kampferprobt', description: 'Schließe 10 Arenakämpfe ab.', stat: 'battles', target: 10, reward: 100 },
+  { id: 'champion', label: 'Aufstrebender Champion', description: 'Gewinne 10 Arenakämpfe.', stat: 'wins', target: 10, reward: 150 },
+  { id: 'card-master', label: 'Taktiker', description: 'Spiele insgesamt 100 Karten aus.', stat: 'cardsPlayed', target: 100, reward: 100 },
+  { id: 'spell-master', label: 'Zauberwirker', description: 'Wirke insgesamt 25 Zauber.', stat: 'spellsCast', target: 25, reward: 100 },
+];
 
 function utcDay(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
@@ -64,6 +71,7 @@ export class Player {
       spellsCast: 0,
       durationSeconds: 0,
     };
+    this.achievementRewardsClaimed = [];
     this.battleHistory = [];
   }
 
@@ -99,6 +107,32 @@ export class Player {
     };
     this.battleStats.battles = Math.max(this.battleStats.battles,
       safeAdd(safeAdd(this.battleStats.wins, this.battleStats.losses), this.battleStats.draws));
+  }
+
+  restoreAchievementClaims(claimed = []) {
+    const allowedIds = new Set(ACHIEVEMENTS.map((achievement) => achievement.id));
+    this.achievementRewardsClaimed = Array.isArray(claimed)
+      ? [...new Set(claimed.filter((id) => allowedIds.has(id)))]
+      : [];
+  }
+
+  getAchievements() {
+    return ACHIEVEMENTS.map((achievement) => ({
+      ...achievement,
+      progress: Math.min(achievement.target, this.battleStats[achievement.stat]),
+      completed: this.battleStats[achievement.stat] >= achievement.target,
+      claimed: this.achievementRewardsClaimed.includes(achievement.id),
+    }));
+  }
+
+  claimAchievement(achievementId) {
+    const achievement = this.getAchievements().find((entry) => entry.id === achievementId);
+    if (!achievement) throw new Error(`Unknown achievement: ${achievementId}`);
+    if (achievement.claimed) throw new Error('Achievement reward already claimed');
+    if (!achievement.completed) throw new Error('Achievement is not complete yet');
+    this.achievementRewardsClaimed.push(achievementId);
+    this.coins += achievement.reward;
+    return { achievementId, reward: achievement.reward, coins: this.coins };
   }
 
   restoreBattleHistory(records) {
