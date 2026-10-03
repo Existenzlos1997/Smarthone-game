@@ -78,6 +78,12 @@ function loadPlayer() {
   if (raw) {
     try {
       const data = JSON.parse(raw);
+      if (typeof data.name === 'string') {
+        try {
+          player.setName(data.name);
+        } catch {
+        }
+      }
       player.level = data.level ?? 1;
       player.xp = data.xp ?? 0;
       player.coins = data.coins ?? 0;
@@ -111,6 +117,7 @@ function loadPlayer() {
 
 function savePlayer() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    name: player.name,
     level: player.level,
     xp: player.xp,
     coins: player.coins,
@@ -202,6 +209,27 @@ document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('c
   showScreen(btn.dataset.nav);
 }));
 document.getElementById('btn-share').addEventListener('click', onShare);
+const playerNameDialog = document.getElementById('player-name-dialog');
+const playerNameInput = document.getElementById('player-name-input');
+document.getElementById('btn-edit-player-name').addEventListener('click', () => {
+  playerNameInput.value = player.name;
+  playerNameDialog.showModal();
+  playerNameInput.focus();
+});
+document.getElementById('btn-cancel-player-name').addEventListener('click', () => playerNameDialog.close());
+document.getElementById('player-name-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  try {
+    player.setName(playerNameInput.value);
+    savePlayer();
+    renderMenu();
+    playerNameDialog.close();
+  } catch (error) {
+    playerNameInput.setCustomValidity(error.message);
+    playerNameInput.reportValidity();
+  }
+});
+playerNameInput.addEventListener('input', () => playerNameInput.setCustomValidity(''));
 document.getElementById('btn-bell').addEventListener('click', () => {
   alert(player.canHuntToday() ? 'Deine tägliche Jagd wartet auf dich! 🎯' : 'Keine neuen Benachrichtigungen.');
 });

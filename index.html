@@ -23,7 +23,10 @@
         <div class="profile-avatar" aria-hidden="true">🧙</div>
         <div class="profile-copy">
           <span class="eyebrow">DEIN AUSSENPOSTEN</span>
-          <h1 class="fortress-title" id="menu-fortress-title">Festung von Spieler</h1>
+          <div class="profile-name-row">
+            <h1 class="fortress-title" id="menu-fortress-title">Festung von Spieler</h1>
+            <button class="profile-name-edit" id="btn-edit-player-name" type="button" aria-label="Spielernamen ändern">✎</button>
+          </div>
         </div>
         <span class="level-medallion" id="menu-level" role="img" aria-label="Spielerstufe 1">1</span>
       </div>
@@ -34,6 +37,17 @@
         <button class="icon-btn" id="btn-share" title="Teilen" aria-label="Spiel teilen">↗</button>
       </div>
     </header>
+    <dialog class="player-name-dialog" id="player-name-dialog" aria-labelledby="player-name-title">
+      <form id="player-name-form">
+        <h2 id="player-name-title">Spielername ändern</h2>
+        <label for="player-name-input">Dein Name</label>
+        <input id="player-name-input" name="name" type="text" maxlength="20" autocomplete="nickname" required>
+        <div class="player-name-actions">
+          <button class="btn btn-secondary" id="btn-cancel-player-name" type="button">Abbrechen</button>
+          <button class="btn btn-primary" type="submit">Speichern</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="resource-shelf" aria-label="Spielressourcen">
       <div class="resource-pill trophy-resource">

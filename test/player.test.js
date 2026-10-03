@@ -12,6 +12,17 @@ test('starts at level 1 with starter cards', () => {
   assert.ok(!player.deck.includes('pfeil'));
 });
 
+test('player names are trimmed, bounded and reject empty or control-character values', () => {
+  const player = new Player({ name: '  Magierin  ' });
+  assert.equal(player.name, 'Magierin');
+  assert.equal(player.setName('  Éowyn 🧙  '), 'Éowyn 🧙');
+  assert.equal(player.name, 'Éowyn 🧙');
+  assert.throws(() => player.setName('   '), /visible text/);
+  assert.throws(() => player.setName('Name\nBetrüger'), /visible text/);
+  assert.throws(() => player.setName('a'.repeat(21)), /at most 20/);
+  assert.throws(() => player.setName(null), /must be text/);
+});
+
 test('addXp levels up once the threshold is reached', () => {
   const player = new Player();
   const leveledUp = player.addXp(150);

@@ -7,6 +7,7 @@ const FORTRESS_SLOTS = 4;
 const XP_PER_LEVEL = 100;
 const DAILY_HUNT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const MAX_CARD_LEVEL = 10;
+const MAX_PLAYER_NAME_LENGTH = 20;
 const STARTER_GEMS = 50;
 const LEVEL_UP_COIN_REWARD = 50;
 const TROPHIES_PER_WIN = 30;
@@ -40,7 +41,8 @@ function utcDay(timestamp) {
  */
 export class Player {
   constructor({ name = 'Spieler', now = () => Date.now() } = {}) {
-    this.name = name;
+    this.name = 'Spieler';
+    this.setName(name);
     this.now = now;
     this.level = 1;
     this.xp = 0;
@@ -73,6 +75,19 @@ export class Player {
     };
     this.achievementRewardsClaimed = [];
     this.battleHistory = [];
+  }
+
+  setName(name) {
+    if (typeof name !== 'string') throw new Error('Player name must be text');
+    const normalizedName = name.trim();
+    if (!normalizedName || /[\u0000-\u001f\u007f]/u.test(normalizedName)) {
+      throw new Error('Player name must contain visible text only');
+    }
+    if ([...normalizedName].length > MAX_PLAYER_NAME_LENGTH) {
+      throw new Error(`Player name must be at most ${MAX_PLAYER_NAME_LENGTH} characters`);
+    }
+    this.name = normalizedName;
+    return this.name;
   }
 
   restoreWinStreaks({ current, best } = {}) {
@@ -391,4 +406,5 @@ export {
   LEVEL_UP_COIN_REWARD,
   TROPHIES_PER_WIN,
   TROPHIES_PER_LOSS,
+  MAX_PLAYER_NAME_LENGTH,
 };

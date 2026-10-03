@@ -96,8 +96,16 @@ body {
 }
 
 .profile-copy { min-width: 0; }
+.profile-name-row { min-width: 0; display: flex; align-items: center; gap: 4px; }
 .eyebrow { display: block; color: #c5b88f; font-size: .61rem; font-weight: 900; letter-spacing: .14em; }
 .fortress-title { overflow: hidden; margin: 2px 0 0; color: #fff4d6; font-size: 1rem; text-overflow: ellipsis; white-space: nowrap; }
+.profile-name-edit { flex: 0 0 auto; padding: 3px 5px; border: 1px solid #75827b; border-radius: 7px; background: #263b3d; color: #f2d38e; font: inherit; cursor: pointer; }
+.player-name-dialog { width: min(360px, calc(100% - 32px)); padding: 20px; border: 1px solid #75827b; border-radius: 16px; background: linear-gradient(145deg, #293b39, #1d2931); color: var(--ink); box-shadow: 0 18px 48px #0009; }
+.player-name-dialog::backdrop { background: #090d16b8; }
+.player-name-dialog h2 { margin: 0 0 14px; font-size: 1.1rem; }
+.player-name-dialog label { display: block; margin-bottom: 6px; color: #c3cfbf; font-size: .8rem; }
+.player-name-dialog input { width: 100%; padding: 10px; border: 1px solid #75827b; border-radius: 9px; background: #172329; color: var(--ink); font: inherit; }
+.player-name-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .level-medallion {
   width: 37px;
   height: 37px;

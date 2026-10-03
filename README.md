@@ -25,7 +25,8 @@ bei jedem Push nach `main`.
 
 - **Festung/Hauptmenü**: zeigt Spieler-Level, XP-Fortschritt, Pokale/Arena-
   Fortschritt sowie Münzen und Diamanten (Clash-Royale-artig), dazu eine
-  Übersicht der eigenen Kartensammlung mit Kartenstufe.
+  Übersicht der eigenen Kartensammlung mit Kartenstufe. Der Spielername lässt
+  sich ändern und wird lokal gespeichert.
 - **Levelaufstiege**: jedes neue Spielerlevel belohnt dich mit 50 Münzen.
 - **Arena-Aufstiege**: jede neu erreichte Arena bringt einmalig mehr Münzen als
   die vorherige; die erhaltenen Belohnungen werden im Spielstand festgehalten.
