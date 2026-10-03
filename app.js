@@ -11,6 +11,16 @@ const RARITY_ICON = {
   [RARITY.EPIC]: '🔥',
   [RARITY.LEGENDARY]: '🌙',
 };
+const CARD_ART = {
+  swordsman: '⚔️',
+  archer: '🏹',
+  shieldbearer: '🛡️',
+  knight: '🗡️',
+  mage: '🧙',
+  catapult: '🏹',
+  griffin: '🦅',
+  dragon: '🐉',
+};
 
 function loadPlayer() {
   const player = new Player();
@@ -83,7 +93,7 @@ document.getElementById('btn-bell').addEventListener('click', () => {
   alert(player.canHuntToday() ? 'Deine tägliche Jagd wartet auf dich! 🎯' : 'Keine neuen Benachrichtigungen.');
 });
 document.querySelectorAll('.plus-btn').forEach((btn) => btn.addEventListener('click', () => {
-  alert('Der Shop ist noch im Bau. Schau bald wieder vorbei!');
+  showScreen('screen-shop');
 }));
 
 function onShare() {
@@ -104,7 +114,10 @@ function onShare() {
 function renderMenu() {
   document.getElementById('menu-fortress-title').textContent = `Festung von ${player.name}`;
   document.getElementById('menu-level').textContent = player.level;
+  document.getElementById('menu-level-label').textContent = player.level;
   document.getElementById('menu-xp-fill').style.width = `${Math.min(100, player.xp)}%`;
+  document.getElementById('menu-xp-count').textContent = `${player.xp} / 100 XP`;
+  document.querySelector('.xp-track').setAttribute('aria-valuenow', player.xp);
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 
@@ -141,6 +154,8 @@ function renderMenu() {
   player.collection.forEach((cardId) => {
     collectionEl.appendChild(collectionTile(cardId));
   });
+  const battleArena = document.getElementById('battle-arena-name');
+  if (battleArena) battleArena.textContent = current.name;
 }
 
 function collectionTile(cardId) {
@@ -149,13 +164,15 @@ function collectionTile(cardId) {
   const div = document.createElement('div');
   div.className = `card rarity-${card.rarity}`;
   div.innerHTML = `
+    <div class="collection-card-art" aria-hidden="true">${CARD_ART[cardId] ?? '✧'}</div>
     <div class="card-badges">
-      <span class="level-badge">${level}</span>
-      <span class="rarity-badge">${RARITY_ICON[card.rarity]}</span>
+      <span class="rarity-badge">${RARITY_ICON[card.rarity]} ${card.rarity}</span>
+      <span class="level-badge">St. ${level}</span>
     </div>
-    <div class="card-name">${card.name}</div>
-    <div class="card-sub">Lv. ${level}</div>
+    <div class="card-name"></div>
+    <div class="card-sub">❤ ${card.hp} &nbsp; ⚔ ${card.damage}</div>
   `;
+  div.querySelector('.card-name').textContent = card.name;
   return div;
 }
 
