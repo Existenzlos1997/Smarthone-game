@@ -10,6 +10,7 @@ const STARTER_GEMS = 50;
 const TROPHIES_PER_WIN = 30;
 const TROPHIES_PER_LOSS = 10;
 const CARD_UPGRADE_COST_PER_LEVEL = 50;
+const MAX_BATTLE_HISTORY = 10;
 export const DAILY_QUESTS = [
   { id: 'win', label: 'Gewinne einen Arenakampf', target: 1, reward: 120 },
   { id: 'play-cards', label: 'Spiele 5 Karten aus', target: 5, reward: 80 },
@@ -48,6 +49,48 @@ export class Player {
       spellsCast: 0,
       claimed: [],
     };
+    this.battleHistory = [];
+  }
+
+  restoreBattleHistory(records) {
+    if (!Array.isArray(records)) return;
+    this.battleHistory = records
+      .filter((record) => record && typeof record === 'object' && !Array.isArray(record))
+      .filter((record) => ['player', 'enemy', 'draw'].includes(record.result) && Number.isFinite(Date.parse(record.playedAt)))
+      .slice(0, MAX_BATTLE_HISTORY)
+      .map((record) => ({
+        result: record.result,
+        playedAt: new Date(record.playedAt).toISOString(),
+        trophyChange: Number.isSafeInteger(record.trophyChange) ? Math.max(-10, Math.min(30, record.trophyChange)) : 0,
+        opponent: typeof record.opponent === 'string' ? record.opponent.slice(0, 40) : 'Übungsgegner',
+        durationSeconds: Number.isSafeInteger(record.durationSeconds) ? Math.max(0, Math.min(180, record.durationSeconds)) : 0,
+        cardsPlayed: Number.isSafeInteger(record.cardsPlayed) ? Math.max(0, Math.min(100, record.cardsPlayed)) : 0,
+        spellsCast: Number.isSafeInteger(record.spellsCast) ? Math.max(0, Math.min(100, record.spellsCast)) : 0,
+        playerFortressHealth: Number.isFinite(record.playerFortressHealth)
+          ? Math.max(0, Math.min(100, record.playerFortressHealth))
+          : 0,
+        enemyFortressHealth: Number.isFinite(record.enemyFortressHealth)
+          ? Math.max(0, Math.min(100, record.enemyFortressHealth))
+          : 0,
+      }));
+  }
+
+  recordBattle({ result, trophyChange = 0, opponent = 'Übungsgegner', durationSeconds = 0, cardsPlayed = 0, spellsCast = 0, playerFortressHealth = 0, enemyFortressHealth = 0 }) {
+    if (!['player', 'enemy', 'draw'].includes(result)) throw new Error(`Invalid battle result: ${result}`);
+    const record = {
+      result,
+      playedAt: new Date(this.now()).toISOString(),
+      trophyChange: Number.isSafeInteger(trophyChange) ? trophyChange : 0,
+      opponent: String(opponent).slice(0, 40),
+      durationSeconds: Number.isSafeInteger(durationSeconds) ? Math.max(0, Math.min(180, durationSeconds)) : 0,
+      cardsPlayed: Number.isSafeInteger(cardsPlayed) ? Math.max(0, Math.min(100, cardsPlayed)) : 0,
+      spellsCast: Number.isSafeInteger(spellsCast) ? Math.max(0, Math.min(100, spellsCast)) : 0,
+      playerFortressHealth: Number.isFinite(playerFortressHealth) ? Math.max(0, Math.min(100, playerFortressHealth)) : 0,
+      enemyFortressHealth: Number.isFinite(enemyFortressHealth) ? Math.max(0, Math.min(100, enemyFortressHealth)) : 0,
+    };
+    this.battleHistory.unshift(record);
+    this.battleHistory.length = Math.min(this.battleHistory.length, MAX_BATTLE_HISTORY);
+    return record;
   }
 
   restoreDailyQuestProgress(progress) {

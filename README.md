@@ -35,6 +35,9 @@ bei jedem Push nach `main`.
 - **Tägliche Aufgaben**: gewinne einen Kampf, spiele Karten und wirke Zauber,
   um zusätzliche Münzen zu verdienen. Fortschritt und bereits abgeholte
   Belohnungen bleiben im Spielstand und setzen sich täglich nach UTC zurück.
+- **Kampfprotokoll**: die zehn letzten Siege, Niederlagen und Remis werden mit
+  Datum, Pokaländerung, Spielzeit, gespielten Karten und Festungszustand lokal
+  gespeichert.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.

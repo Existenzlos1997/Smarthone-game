@@ -96,6 +96,7 @@ function loadPlayer() {
       }
       player.lastHuntAt = data.lastHuntAt ?? null;
       player.restoreDailyQuestProgress(data.dailyQuestProgress);
+      player.restoreBattleHistory(data.battleHistory);
     } catch (err) {
       console.warn('Konnte Spielstand nicht laden, starte neu.', err);
     }
@@ -117,6 +118,7 @@ function savePlayer() {
     deck: player.deck,
     lastHuntAt: player.lastHuntAt,
     dailyQuestProgress: player.dailyQuestProgress,
+    battleHistory: player.battleHistory,
   }));
 }
 
@@ -253,6 +255,7 @@ function renderMenu() {
     : `Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`;
 
   renderDailyQuests();
+  renderBattleHistory();
 
   const collectionEl = document.getElementById('menu-collection');
   collectionEl.innerHTML = '';
@@ -261,6 +264,43 @@ function renderMenu() {
   });
   const battleArena = document.getElementById('battle-arena-name');
   if (battleArena) battleArena.textContent = current.name;
+}
+
+function renderBattleHistory() {
+  const historyEl = document.getElementById('battle-history');
+  if (!historyEl) return;
+  historyEl.replaceChildren();
+  if (player.battleHistory.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'battle-history-empty';
+    empty.textContent = 'Deine abgeschlossenen Kämpfe erscheinen hier.';
+    historyEl.appendChild(empty);
+    return;
+  }
+  for (const match of player.battleHistory) {
+    const row = document.createElement('article');
+    row.className = `battle-history-entry result-${match.result}`;
+    const marker = document.createElement('span');
+    marker.className = 'battle-history-result';
+    marker.textContent = match.result === 'player' ? 'SIEG' : match.result === 'enemy' ? 'NIEDERLAGE' : 'REMIS';
+    const details = document.createElement('div');
+    details.className = 'battle-history-details';
+    const opponent = document.createElement('strong');
+    opponent.textContent = `vs. ${match.opponent}`;
+    const timestamp = new Date(match.playedAt);
+    const date = document.createElement('span');
+    date.textContent = Number.isNaN(timestamp.getTime())
+      ? 'Zeit unbekannt'
+      : timestamp.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    const stats = document.createElement('span');
+    stats.textContent = `${Math.floor(match.durationSeconds / 60)}:${String(match.durationSeconds % 60).padStart(2, '0')} · ${match.cardsPlayed} Karten · ${match.playerFortressHealth}% Festung`;
+    details.append(opponent, date, stats);
+    const trophies = document.createElement('strong');
+    trophies.className = 'battle-history-trophies';
+    trophies.textContent = `${match.trophyChange > 0 ? '+' : ''}${match.trophyChange} ✦`;
+    row.append(marker, details, trophies);
+    historyEl.appendChild(row);
+  }
 }
 
 function renderDailyQuests() {
@@ -932,11 +972,22 @@ function drawLiveBattle(ctx, canvas, session) {
 
 function finishLiveBattle(winner) {
   const resultEl = document.getElementById('battle-result');
+  const trophiesBefore = player.trophies;
   player.recordBattleOutcome(winner);
   player.recordDailyQuestProgress({
     winner,
     cardsPlayed: liveBattle.playerCardsPlayed,
     spellsCast: liveBattle.playerSpellsCast,
+  });
+  player.recordBattle({
+    result: winner,
+    trophyChange: player.trophies - trophiesBefore,
+    opponent: 'Übungsgegner',
+    durationSeconds: Math.floor(liveBattle.elapsed),
+    cardsPlayed: liveBattle.playerCardsPlayed,
+    spellsCast: liveBattle.playerSpellsCast,
+    playerFortressHealth: Math.ceil(liveBattle.playerFortressHp / FORTRESS_HP * 100),
+    enemyFortressHealth: Math.ceil(liveBattle.enemyFortressHp / FORTRESS_HP * 100),
   });
   if (winner === 'player') {
     const xpGain = 40;

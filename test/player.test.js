@@ -116,6 +116,34 @@ test('daily battle quests reset by UTC date and ignore invalid restored progress
   assert.equal(player.getDailyQuests().some((quest) => quest.claimed), false);
 });
 
+test('battle history keeps ten newest outcomes and restores only valid bounded records', () => {
+  let now = Date.parse('2026-10-03T12:00:00Z');
+  const player = new Player({ now: () => now });
+  player.restoreBattleHistory([{ result: 'hacked', playedAt: new Date(now).toISOString() }]);
+  assert.deepEqual(player.battleHistory, []);
+
+  for (let index = 0; index < 12; index += 1) {
+    player.recordBattle({
+      result: index % 2 ? 'enemy' : 'player',
+      trophyChange: index % 2 ? -10 : 30,
+      durationSeconds: index + 1,
+      cardsPlayed: index,
+      spellsCast: 1,
+      playerFortressHealth: 150,
+      enemyFortressHealth: -10,
+    });
+    now += 1000;
+  }
+  assert.equal(player.battleHistory.length, 10);
+  assert.equal(player.battleHistory[0].durationSeconds, 12);
+  assert.equal(player.battleHistory[0].playerFortressHealth, 100);
+  assert.equal(player.battleHistory[0].enemyFortressHealth, 0);
+  assert.equal(player.battleHistory.at(-1).durationSeconds, 3);
+  const restored = new Player({ now: () => now });
+  restored.restoreBattleHistory([...player.battleHistory, null, { result: 'enemy', playedAt: 'bad-date' }]);
+  assert.deepEqual(restored.battleHistory, player.battleHistory);
+});
+
 test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
   const player = new Player();
   player.recordBattleOutcome('player');

@@ -196,6 +196,17 @@ body {
 .quest-claim:disabled { filter: brightness(.58); cursor: default; }
 
 .collection-section { margin-top: 19px; }
+.battle-history-section { margin-top: 18px; }
+.battle-history { display: grid; gap: 7px; }
+.battle-history-empty { margin: 0; padding: 13px; border: 1px dashed #65766b; border-radius: 12px; color: #bdc9bc; font-size: .72rem; text-align: center; }
+.battle-history-entry { min-width: 0; display: grid; grid-template-columns: 75px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px; border: 1px solid #53655e; border-radius: 12px; background: linear-gradient(120deg, #293a3a, #242f37); }
+.battle-history-result { padding: 6px 4px; border: 1px solid #b8c68a; border-radius: 8px; color: #d8e7af; font-size: .56rem; font-weight: 900; text-align: center; }
+.result-enemy .battle-history-result { border-color: #bd7581; color: #ffb8c0; }
+.result-draw .battle-history-result { border-color: #8894a3; color: #d0d8e2; }
+.battle-history-details { min-width: 0; display: grid; gap: 3px; }
+.battle-history-details strong { overflow: hidden; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+.battle-history-details span { color: #b8c4bb; font-size: .57rem; }
+.battle-history-trophies { color: #e4cc7e; font-size: .67rem; white-space: nowrap; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
 .section-title { margin: 2px 0 0; font-size: 1.1rem; }
 .text-link { border: 0; background: none; color: #e3c47b; font-size: .72rem; font-weight: 800; cursor: pointer; }
