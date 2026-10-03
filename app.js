@@ -409,6 +409,12 @@ function renderBattleHistory() {
     const stats = document.createElement('span');
     stats.textContent = `${Math.floor(match.durationSeconds / 60)}:${String(match.durationSeconds % 60).padStart(2, '0')} · ${match.cardsPlayed} Karten · ${match.playerFortressHealth}% Festung`;
     details.append(opponent, date, stats);
+    if (match.cards?.length || match.spells?.length) {
+      const played = document.createElement('span');
+      const names = [...match.cards, ...match.spells].map((cardId) => getCardById(cardId).name);
+      played.textContent = `Gespielt: ${names.join(', ')}`;
+      details.appendChild(played);
+    }
     const trophies = document.createElement('strong');
     trophies.className = 'battle-history-trophies';
     trophies.textContent = `${match.trophyChange > 0 ? '+' : ''}${match.trophyChange} ✦`;
@@ -1145,6 +1151,8 @@ function finishLiveBattle(winner) {
     durationSeconds: Math.floor(liveBattle.elapsed),
     cardsPlayed: liveBattle.playerCardsPlayed,
     spellsCast: liveBattle.playerSpellsCast,
+    cards: liveBattle.playerCardsPlayedIds,
+    spells: liveBattle.playerSpellsCastIds,
     playerFortressHealth: Math.ceil(liveBattle.playerFortressHp / FORTRESS_HP * 100),
     enemyFortressHealth: Math.ceil(liveBattle.enemyFortressHp / FORTRESS_HP * 100),
   });

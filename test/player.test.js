@@ -175,6 +175,22 @@ test('battle history keeps ten newest outcomes and restores only valid bounded r
   assert.deepEqual(restored.battleHistory, player.battleHistory);
 });
 
+test('battle history retains only owned monster and spell IDs', () => {
+  const player = new Player();
+  player.recordBattle({
+    result: 'player',
+    cards: ['swordsman', 'pfeil', 'unknown'],
+    spells: ['pfeil', 'dragon', 'unknown'],
+  });
+  assert.deepEqual(player.battleHistory[0].cards, ['swordsman']);
+  assert.deepEqual(player.battleHistory[0].spells, ['pfeil']);
+
+  const restored = new Player();
+  restored.restoreBattleHistory(player.battleHistory);
+  assert.deepEqual(restored.battleHistory[0].cards, ['swordsman']);
+  assert.deepEqual(restored.battleHistory[0].spells, ['pfeil']);
+});
+
 test('career battle statistics accumulate outcomes and activity independently of history', () => {
   const player = new Player();
   player.recordBattle({ result: 'player', durationSeconds: 40, cardsPlayed: 5, spellsCast: 2 });

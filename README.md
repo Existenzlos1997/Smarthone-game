@@ -41,7 +41,8 @@ bei jedem Push nach `main`.
   Belohnungen bleiben im Spielstand und setzen sich täglich nach UTC zurück.
 - **Kampfprotokoll**: die zehn letzten Siege, Niederlagen und Remis werden mit
   Datum, Pokaländerung, Spielzeit, gespielten Karten und Festungszustand lokal
-  gespeichert.
+  gespeichert; der Protokolleintrag nennt außerdem die eingesetzten Kreaturen
+  und Zauber.
 - **Siegesserie**: aktuelle Folge und persönlicher Bestwert werden gespeichert;
   Siege verlängern sie, Niederlagen beenden sie und Remis lassen sie bestehen.
 - **Kampfstatistik**: das Profil zählt alle abgeschlossenen Kämpfe, die

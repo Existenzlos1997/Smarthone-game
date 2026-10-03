@@ -59,6 +59,8 @@ export class LiveBattle {
     this.selectedSpellIndex = null;
     this.playerCardsPlayed = 0;
     this.playerSpellsCast = 0;
+    this.playerCardsPlayedIds = [];
+    this.playerSpellsCastIds = [];
   }
 
   get playerHand() { return this.playerQueue.slice(0, 4); }
@@ -75,6 +77,7 @@ export class LiveBattle {
     this.playerEnergy -= card.cost;
     this.units.push(makeUnit('player', cardId, 1.4, false, this.playerCardLevels));
     this.playerCardsPlayed += 1;
+    this.playerCardsPlayedIds.push(cardId);
     this.#rotateCard(handIndex, cardId);
     return { ok: true, cardId };
   }
@@ -112,6 +115,8 @@ export class LiveBattle {
     this.#applySpell(spell, x);
     this.playerCardsPlayed += 1;
     this.playerSpellsCast += 1;
+    this.playerCardsPlayedIds.push(cardId);
+    this.playerSpellsCastIds.push(cardId);
     this.#rotateCard(index, cardId);
     this.selectedSpellIndex = null;
     return { ok: true, cardId, x };

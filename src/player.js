@@ -180,6 +180,12 @@ export class Player {
         durationSeconds: Number.isSafeInteger(record.durationSeconds) ? Math.max(0, Math.min(180, record.durationSeconds)) : 0,
         cardsPlayed: Number.isSafeInteger(record.cardsPlayed) ? Math.max(0, Math.min(100, record.cardsPlayed)) : 0,
         spellsCast: Number.isSafeInteger(record.spellsCast) ? Math.max(0, Math.min(100, record.spellsCast)) : 0,
+        cards: Array.isArray(record.cards)
+          ? record.cards.filter((cardId) => this.collection.includes(cardId) && getCardById(cardId).type === 'monster').slice(0, 20)
+          : [],
+        spells: Array.isArray(record.spells)
+          ? record.spells.filter((cardId) => this.collection.includes(cardId) && getCardById(cardId).type === 'spell').slice(0, 20)
+          : [],
         playerFortressHealth: Number.isFinite(record.playerFortressHealth)
           ? Math.max(0, Math.min(100, record.playerFortressHealth))
           : 0,
@@ -189,7 +195,7 @@ export class Player {
       }));
   }
 
-  recordBattle({ result, trophyChange = 0, opponent = 'Übungsgegner', durationSeconds = 0, cardsPlayed = 0, spellsCast = 0, playerFortressHealth = 0, enemyFortressHealth = 0 }) {
+  recordBattle({ result, trophyChange = 0, opponent = 'Übungsgegner', durationSeconds = 0, cardsPlayed = 0, spellsCast = 0, cards = [], spells = [], playerFortressHealth = 0, enemyFortressHealth = 0 }) {
     if (!['player', 'enemy', 'draw'].includes(result)) throw new Error(`Invalid battle result: ${result}`);
     const boundedCount = (value, max) => Number.isSafeInteger(value) ? Math.max(0, Math.min(max, value)) : 0;
     const record = {
@@ -200,6 +206,12 @@ export class Player {
       durationSeconds: boundedCount(durationSeconds, 180),
       cardsPlayed: boundedCount(cardsPlayed, 100),
       spellsCast: boundedCount(spellsCast, 100),
+      cards: Array.isArray(cards)
+        ? cards.filter((cardId) => this.collection.includes(cardId) && getCardById(cardId).type === 'monster').slice(0, 20)
+        : [],
+      spells: Array.isArray(spells)
+        ? spells.filter((cardId) => this.collection.includes(cardId) && getCardById(cardId).type === 'spell').slice(0, 20)
+        : [],
       playerFortressHealth: Number.isFinite(playerFortressHealth) ? Math.max(0, Math.min(100, playerFortressHealth)) : 0,
       enemyFortressHealth: Number.isFinite(enemyFortressHealth) ? Math.max(0, Math.min(100, enemyFortressHealth)) : 0,
     };
