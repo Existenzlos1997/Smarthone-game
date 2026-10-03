@@ -214,6 +214,7 @@ document.getElementById('btn-share').addEventListener('click', onShare);
 const playerNameDialog = document.getElementById('player-name-dialog');
 const playerNameInput = document.getElementById('player-name-input');
 const avatarOptions = document.getElementById('avatar-options');
+let selectedAvatar = player.avatar;
 for (const avatar of PLAYER_AVATARS) {
   const option = document.createElement('button');
   option.type = 'button';
@@ -221,16 +222,14 @@ for (const avatar of PLAYER_AVATARS) {
   option.textContent = avatar;
   option.setAttribute('aria-label', `Avatar ${avatar}`);
   option.addEventListener('click', () => {
-    player.setAvatar(avatar);
-    savePlayer();
-    renderMenu();
+    selectedAvatar = avatar;
     renderAvatarOptions();
   });
   avatarOptions.appendChild(option);
 }
 function renderAvatarOptions() {
   avatarOptions.querySelectorAll('.avatar-option').forEach((option) => {
-    const selected = option.textContent === player.avatar;
+    const selected = option.textContent === selectedAvatar;
     option.classList.toggle('selected', selected);
     option.setAttribute('aria-pressed', String(selected));
   });
@@ -238,6 +237,7 @@ function renderAvatarOptions() {
 document.getElementById('btn-edit-player-name').addEventListener('click', () => {
   playerNameInput.setCustomValidity('');
   playerNameInput.value = player.name;
+  selectedAvatar = player.avatar;
   playerNameDialog.showModal();
   playerNameInput.focus();
   renderAvatarOptions();
@@ -247,6 +247,7 @@ document.getElementById('player-name-form').addEventListener('submit', (event) =
   event.preventDefault();
   try {
     player.setName(playerNameInput.value);
+    player.setAvatar(selectedAvatar);
     savePlayer();
     renderMenu();
     playerNameDialog.close();
