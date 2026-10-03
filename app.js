@@ -1,10 +1,15 @@
-import { Player } from './src/player.js';
+import { DECK_SIZE, Player } from './src/player.js';
 import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
 import { simulateBattle, LANE_LENGTH, FORTRESS_HP } from './src/battle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 import { getArenaProgress } from './src/arenas.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
+const BATTLE_VISUAL_DURATION_MS = 3600;
+const TROOP_ADVANCE_END = 0.72;
+const CLASH_START = 0.68;
+const CLASH_END = 0.96;
+const CLASH_PULSE_FREQUENCY = 90;
 const RARITY_ICON = {
   [RARITY.COMMON]: '💀',
   [RARITY.RARE]: '🌀',
@@ -333,11 +338,11 @@ function cardTile(cardId, { selected = false, onClick = null } = {}) {
     div.setAttribute('role', 'button');
     div.setAttribute('aria-pressed', String(selected));
     div.tabIndex = 0;
-    div.addEventListener('click', onClick);
+    div.addEventListener('click', (event) => onClick(event));
     div.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        onClick();
+        onClick(event);
       }
     });
   }
@@ -470,8 +475,8 @@ function renderBattleScreen() {
 function renderBattleHand() {
   const hand = document.getElementById('battle-hand');
   hand.replaceChildren();
-  document.getElementById('battle-deck-count').textContent = `${player.deck.length} / 4`;
-  for (let index = 0; index < 4; index += 1) {
+  document.getElementById('battle-deck-count').textContent = `${player.deck.length} / ${DECK_SIZE}`;
+  for (let index = 0; index < DECK_SIZE; index += 1) {
     const cardId = player.deck[index];
     const element = document.createElement('div');
     if (!cardId) {
@@ -528,17 +533,27 @@ function runBattle(ctx, canvas) {
 }
 
 function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
-  const durationMs = 3600;
+  const durationMs = BATTLE_VISUAL_DURATION_MS;
   const start = performance.now();
+  const playerHealth = document.getElementById('player-fortress-health');
+  const enemyHealth = document.getElementById('enemy-fortress-health');
+  const timer = document.getElementById('battle-timer');
+  let previousPlayerHp;
+  let previousEnemyHp;
+  let previousTimer;
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
     drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck);
-    const playerHp = Math.round((FORTRESS_HP - (FORTRESS_HP - result.playerFortressHp) * progress) / FORTRESS_HP * 100);
-    const enemyHp = Math.round((FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * progress) / FORTRESS_HP * 100);
-    document.getElementById('player-fortress-health').textContent = `${playerHp}%`;
-    document.getElementById('enemy-fortress-health').textContent = `${enemyHp}%`;
+    const playerHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.playerFortressHp, progress) / FORTRESS_HP * 100);
+    const enemyHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.enemyFortressHp, progress) / FORTRESS_HP * 100);
     const battleDuration = Number.isFinite(result.durationSeconds) ? result.durationSeconds : durationMs / 1000;
-    document.getElementById('battle-timer').textContent = `${Math.ceil((1 - progress) * battleDuration)}s`;
+    const timerText = `${Math.ceil((1 - progress) * battleDuration)}s`;
+    if (playerHp !== previousPlayerHp) playerHealth.textContent = `${playerHp}%`;
+    if (enemyHp !== previousEnemyHp) enemyHealth.textContent = `${enemyHp}%`;
+    if (timerText !== previousTimer) timer.textContent = timerText;
+    previousPlayerHp = playerHp;
+    previousEnemyHp = enemyHp;
+    previousTimer = timerText;
 
     if (progress < 1) {
       requestAnimationFrame(frame);
@@ -547,6 +562,10 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
     }
   }
   requestAnimationFrame(frame);
+}
+
+function interpolateFortressHp(startHp, endHp, progress) {
+  return startHp + (endHp - startHp) * progress;
 }
 
 function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
@@ -609,8 +628,8 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
   ctx.globalAlpha = 1;
 
   const hpProgress = progress;
-  const playerHp = result ? FORTRESS_HP - (FORTRESS_HP - result.playerFortressHp) * hpProgress : FORTRESS_HP;
-  const enemyHp = result ? FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * hpProgress : FORTRESS_HP;
+  const playerHp = result ? interpolateFortressHp(FORTRESS_HP, result.playerFortressHp, hpProgress) : FORTRESS_HP;
+  const enemyHp = result ? interpolateFortressHp(FORTRESS_HP, result.enemyFortressHp, hpProgress) : FORTRESS_HP;
   drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#45d9b0', playerHp);
   ctx.save();
   ctx.translate(width, 0);
@@ -618,12 +637,12 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
   drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#ff667b', enemyHp);
   ctx.restore();
 
-  const advance = Math.min(1, progress / 0.72);
+  const advance = Math.min(1, progress / TROOP_ADVANCE_END);
   drawTroops(ctx, playerDeck, advance, true, groundY, width);
   drawTroops(ctx, enemyDeck, advance, false, groundY, width);
 
-  if (progress > 0.68 && progress < 0.96) {
-    const pulse = 0.5 + Math.sin(progress * 90) * 0.5;
+  if (progress > CLASH_START && progress < CLASH_END) {
+    const pulse = 0.5 + Math.sin(progress * CLASH_PULSE_FREQUENCY) * 0.5;
     ctx.fillStyle = `rgba(255, 230, 141, ${pulse})`;
     ctx.font = '900 20px sans-serif';
     ctx.textAlign = 'center';
