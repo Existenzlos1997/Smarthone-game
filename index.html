@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Festungskampf</title>
+<meta name="theme-color" content="#1b1240" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Kaltmark" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./assets/app-icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./assets/app-icon.svg" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,56 +18,183 @@
 
   <!-- ===================== HAUPTMENÜ / FESTUNG ===================== -->
   <section id="screen-menu" class="screen active">
-    <header class="topbar">
-      <h1 class="fortress-title" id="menu-fortress-title">Festung von Spieler</h1>
+    <header class="home-header">
+      <div class="profile-chip">
+        <div class="profile-avatar" id="player-avatar" aria-hidden="true">🧙</div>
+        <div class="profile-copy">
+          <span class="eyebrow">DEIN AUSSENPOSTEN</span>
+          <div class="profile-name-row">
+            <h1 class="fortress-title" id="menu-fortress-title">Festung von Spieler</h1>
+            <button class="profile-name-edit" id="btn-edit-player-name" type="button" aria-label="Spielernamen ändern">✎</button>
+          </div>
+        </div>
+        <span class="level-medallion" id="menu-level" role="img" aria-label="Spielerstufe 1">1</span>
+      </div>
       <div class="topbar-icons">
-        <button class="icon-btn" id="btn-bell" title="Benachrichtigungen">
+        <button class="icon-btn" id="btn-bell" title="Benachrichtigungen" aria-label="Benachrichtigungen">
           🔔<span class="badge" id="menu-notif-badge" hidden></span>
         </button>
-        <button class="icon-btn" id="btn-share" title="Teilen">🔗</button>
+        <button class="icon-btn" id="btn-share" title="Teilen" aria-label="Spiel teilen">↗</button>
       </div>
     </header>
+    <dialog class="player-name-dialog" id="player-name-dialog" aria-labelledby="player-name-title">
+      <form id="player-name-form">
+        <h2 id="player-name-title">Spielername ändern</h2>
+        <label for="player-name-input">Dein Name</label>
+        <input id="player-name-input" name="name" type="text" maxlength="20" autocomplete="nickname" required>
+        <fieldset class="avatar-picker">
+          <legend>Dein Avatar</legend>
+          <div id="avatar-options" class="avatar-options"></div>
+        </fieldset>
+        <div class="player-name-actions">
+          <button class="btn btn-secondary" id="btn-cancel-player-name" type="button">Abbrechen</button>
+          <button class="btn btn-primary" type="submit">Speichern</button>
+        </div>
+      </form>
+    </dialog>
 
-    <div class="currency-bar">
-      <div class="trophy-pill">
-        <div class="trophy-pill-top">🏆 <span id="menu-trophies">0</span> / <span id="menu-next-threshold">150</span></div>
+    <div class="resource-shelf" aria-label="Spielressourcen">
+      <div class="resource-pill trophy-resource">
+        <span class="resource-symbol">✦</span>
+        <span class="resource-value"><strong id="menu-trophies">0</strong><small>POKALE</small></span>
+        <span class="resource-divider"></span>
+        <span class="resource-next"><strong id="menu-next-threshold">150</strong><small>NÄCHSTE ARENA</small></span>
+      </div>
+      <div class="resource-pill"><span class="resource-symbol coin-symbol">◉</span><strong id="menu-coins">0</strong><button class="plus-btn" data-currency="coins" data-nav="screen-shop" aria-label="Münzen ansehen">+</button></div>
+      <div class="resource-pill"><span class="resource-symbol gem-symbol">◆</span><strong id="menu-gems">0</strong><button class="plus-btn" data-currency="gems" data-nav="screen-shop" aria-label="Edelsteine ansehen">+</button></div>
+    </div>
+
+    <div class="player-progress">
+      <span class="progress-label">STUFE <strong id="menu-level-label">1</strong></span>
+      <div class="xp-track" id="menu-xp-track" role="progressbar" aria-label="Erfahrung bis zum nächsten Level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 von 100 XP">
+        <div class="xp-fill" id="menu-xp-fill"></div>
+      </div>
+      <span class="xp-count" id="menu-xp-count">0 / 100 XP</span>
+    </div>
+    <p class="win-streak-summary">🔥 <strong id="menu-win-streak">0</strong> Siege in Folge <span>· Rekord: <strong id="menu-best-win-streak">0</strong></span></p>
+
+    <section class="stronghold-panel" aria-labelledby="menu-arena-name">
+      <div class="stronghold-scene" aria-hidden="true">
+        <svg viewBox="0 0 900 450" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="duskSky" x2="0" y2="1"><stop stop-color="#263f62"/><stop offset=".52" stop-color="#98708a"/><stop offset="1" stop-color="#e4a876"/></linearGradient>
+            <linearGradient id="valley" x2="0" y2="1"><stop stop-color="#658667"/><stop offset="1" stop-color="#243f43"/></linearGradient>
+            <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#9f9580"/><stop offset="1" stop-color="#4f5660"/></linearGradient>
+            <linearGradient id="roof" x2="0" y2="1"><stop stop-color="#c98258"/><stop offset="1" stop-color="#70465a"/></linearGradient>
+          </defs>
+          <rect width="900" height="450" fill="url(#duskSky)"/>
+          <circle cx="720" cy="86" r="42" fill="#ffe2a8" opacity=".86"/>
+          <path d="M0 236 95 153l88 65 120-112 139 131 111-93 112 88 112-113 123 115v216H0Z" fill="#4a516c"/>
+          <path d="m0 271 158-81 129 54 150-78 140 94 139-78 184 72v196H0Z" fill="#374b5b"/>
+          <path d="M0 310q172-60 306 4t274-1 320-17v154H0Z" fill="url(#valley)"/>
+          <path d="M0 357q130-38 224 17t173 12 171-25 332 12v77H0Z" fill="#2b554f" opacity=".8"/>
+          <path d="M0 397q144-50 246 2t207 10 204-23 243 21v43H0Z" fill="#253b40"/>
+          <g fill="#243b46">
+            <path d="m76 306 30-83 30 83h-18v47H94v-47z"/><path d="m151 329 23-66 25 66h-15v34h-18v-34z"/>
+            <path d="m760 320 30-90 32 90h-19v46h-23v-46z"/><path d="m825 342 21-64 22 64h-13v34h-18v-34z"/>
+          </g>
+          <g stroke="#373d4e" stroke-width="5">
+            <path d="M355 307V198h42v109M503 307V198h42v109" fill="url(#stone)"/>
+            <path d="m344 204 32-65 34 65zM492 204l31-65 34 65z" fill="url(#roof)"/>
+            <path d="M388 307V227q60-64 120 0v80z" fill="url(#stone)"/>
+            <path d="M373 307v-47q0-22 13-22t14 22v47M521 307v-47q0-22 12-22t13 22v47" fill="#222a3c"/>
+            <path d="M432 307v-48q0-17 15-17t15 17v48" fill="#273247"/>
+          </g>
+          <g fill="#ffe1a3">
+            <rect x="367" y="209" width="12" height="20" rx="6"/><rect x="515" y="209" width="12" height="20" rx="6"/>
+            <rect x="445" y="208" width="10" height="22" rx="5"/>
+          </g>
+          <path d="M375 141v-28l35 12-35 12M523 141v-28l-34 12 34 12" fill="#d1a95c"/>
+          <path d="M0 374q190-24 310 7t280 0 310 4" fill="none" stroke="#b2bd83" stroke-width="4" opacity=".7"/>
+        </svg>
+        <div class="scene-vignette"></div>
+        <div class="scene-location"><span class="location-mark">⌖</span><span><small>DEIN REICH</small><strong id="menu-arena-name">Heimatdorf</strong></span></div>
+        <div class="scene-prompt">Die Mauern halten. Dein nächster Zug wartet.</div>
+      </div>
+      <div class="arena-progress">
+        <div class="arena-progress-copy"><strong id="menu-arena-next">Nächste Arena ab 150 Pokalen</strong><span>Ruhm wächst mit jedem Sieg</span></div>
         <div class="trophy-track"><div class="trophy-fill" id="menu-trophy-fill"></div></div>
       </div>
-      <div class="currency-pill">🪙 <span id="menu-coins">0</span> <button class="plus-btn" data-currency="coins">+</button></div>
-      <div class="currency-pill">💎 <span id="menu-gems">0</span> <button class="plus-btn" data-currency="gems">+</button></div>
-    </div>
-
-    <div class="player-level-row">
-      <span class="level-circle" id="menu-level">1</span>
-      <div class="xp-bar"><div class="xp-fill" id="menu-xp-fill"></div></div>
-    </div>
-
-    <div class="fortress-banner">
-      <div class="banner-scene" aria-hidden="true">
-        <span class="banner-moon">🌕</span>
-        <span class="banner-castle">🏰</span>
+      <div class="stronghold-actions">
+        <button id="btn-battle" class="btn btn-primary"><span aria-hidden="true">⚔</span> ARENA BETRETEN</button>
+        <button id="btn-fortress" class="btn btn-secondary">Festung &amp; Wachen <span aria-hidden="true">→</span></button>
       </div>
-      <div class="banner-caption">
-        <div class="arena-name" id="menu-arena-name">Arena 1: Heimatdorf</div>
-        <div class="arena-next" id="menu-arena-next">Nächste Arena ab 150 Pokalen</div>
-      </div>
-      <div class="banner-actions">
-        <button id="btn-battle" class="btn btn-primary">⚔ Kampf starten</button>
-        <button id="btn-fortress" class="btn btn-ghost">🛡 Festung ausrüsten</button>
-      </div>
-    </div>
+    </section>
 
-    <h3 class="section-title">Deine Karten</h3>
-    <div class="card-grid" id="menu-collection"></div>
-    <p class="hunt-status" id="hunt-status"></p>
+    <section class="daily-callout">
+      <div class="daily-icon" aria-hidden="true">✧</div>
+      <div><span class="eyebrow">JEDEN TAG NEU</span><strong>Kreaturenspur</strong><p class="hunt-status" id="hunt-status"></p></div>
+      <button class="daily-action" id="btn-menu-hunt" data-nav="screen-hunt" aria-label="Zur täglichen Kreaturenjagd">→</button>
+    </section>
+
+    <section class="daily-quests-section" aria-labelledby="daily-quests-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">TÄGLICHE AUFGABEN</span><h2 class="section-title" id="daily-quests-title">Belohnungen</h2></div>
+      </div>
+      <p id="quest-result" class="shop-result" aria-live="polite"></p>
+      <div id="daily-quests" class="daily-quests"></div>
+    </section>
+
+    <section class="career-stats-section" aria-labelledby="career-stats-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">DEINE LAUFBAHN</span><h2 class="section-title" id="career-stats-title">Kampfstatistik</h2></div>
+      </div>
+      <div class="career-stats">
+        <div><strong id="career-battles">0</strong><span>Kämpfe</span></div>
+        <div><strong id="career-win-rate">—</strong><span>Siegesquote</span></div>
+        <div><strong id="career-results">0 / 0 / 0</strong><span>Siege / Niederlagen / Remis</span></div>
+        <div><strong id="career-cards-played">0</strong><span>Karten gespielt</span></div>
+        <div><strong id="career-spells-cast">0</strong><span>Zauber gewirkt</span></div>
+        <div><strong id="career-battle-time">0 Min.</strong><span>Kampfzeit gesamt</span></div>
+      </div>
+    </section>
+
+    <section class="achievements-section" aria-labelledby="achievements-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">DAUERHAFTE ZIELE</span><h2 class="section-title" id="achievements-title">Errungenschaften</h2></div>
+      </div>
+      <p id="achievement-result" class="shop-result" aria-live="polite"></p>
+      <div id="achievements" class="daily-quests"></div>
+    </section>
+
+    <section class="save-backup-section" aria-labelledby="save-backup-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">LOKALE SICHERUNG</span><h2 class="section-title" id="save-backup-title">Spielstand sichern</h2></div>
+      </div>
+      <p class="hint">Exportiere eine Sicherungsdatei, um deinen Fortschritt auf einem anderen Gerät wiederherzustellen.</p>
+      <div class="save-backup-actions">
+        <button class="btn btn-secondary" id="btn-export-save" type="button">Sicherung exportieren</button>
+        <button class="btn btn-secondary" id="btn-import-save" type="button">Sicherung importieren</button>
+        <input id="import-save-input" type="file" accept="application/json,.json" hidden>
+      </div>
+      <p id="backup-result" class="shop-result" aria-live="polite"></p>
+    </section>
+
+    <section class="battle-history-section" aria-labelledby="battle-history-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">DEINE LETZTEN KÄMPFE</span><h2 class="section-title" id="battle-history-title">Kampfprotokoll</h2></div>
+      </div>
+      <div id="battle-history" class="battle-history"></div>
+    </section>
+
+    <section class="collection-section">
+      <div class="section-heading">
+        <div><span class="eyebrow">DEINE SAMMLUNG</span><h2 class="section-title">Gefährten</h2></div>
+        <button class="text-link" data-nav="screen-deck">Deck ansehen <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="card-grid" id="menu-collection"></div>
+    </section>
   </section>
 
-  <!-- ===================== SHOP (Platzhalter) ===================== -->
+  <!-- ===================== SHOP ===================== -->
   <section id="screen-shop" class="screen">
     <header class="subbar">
       <h2>Shop</h2>
     </header>
-    <p class="hint placeholder-msg">🛒 Der Shop ist noch im Bau. Schau bald wieder vorbei!</p>
+    <p class="hint">Gib Münzen aus, um deine Karten aufzuwerten. Höhere Stufen verbessern Kartenwerte bis maximal Stufe 10.</p>
+    <p class="shop-wallet">Deine Münzen: <strong id="shop-coins">0</strong> ◉</p>
+    <p id="shop-result" class="shop-result" aria-live="polite"></p>
+    <div id="shop-offers" class="shop-offers"></div>
   </section>
 
   <!-- ===================== ALLIANZ (Platzhalter) ===================== -->
@@ -94,29 +228,63 @@
     <div class="card-grid" id="fortress-collection"></div>
   </section>
 
-  <!-- ===================== DECK BAUEN (4 Karten für den Kampf) ===================== -->
+  <!-- ===================== DECK BAUEN (8 Karten für den Kampf) ===================== -->
   <section id="screen-deck" class="screen">
     <header class="subbar">
       <button class="btn btn-back" data-back>← Zurück</button>
-      <h2>Kampf-Deck (4 Karten)</h2>
+      <h2>Kampf-Deck (8 Karten)</h2>
     </header>
-    <p class="hint">Wähle genau 4 Karten. Sie laufen im Kampf automatisch von links nach rechts und kämpfen von selbst.</p>
+    <p class="hint">Wähle genau 8 Karten. Im Kampf spielst du jeweils 4 Karten aus; danach rotieren sie zurück in dein Deck.</p>
     <div class="slot-row" id="deck-slots"></div>
     <h3>Sammlung</h3>
     <div class="card-grid" id="deck-collection"></div>
   </section>
 
-  <!-- ===================== KAMPF (2D Lane Auto-Battle) ===================== -->
+  <!-- ===================== KAMPF (2D Echtzeit-Kartenkampf) ===================== -->
   <section id="screen-battle" class="screen">
-    <header class="subbar">
-      <button class="btn btn-back" data-back>← Zurück</button>
-      <h2>Kampf</h2>
+    <header class="battle-topbar">
+      <button class="battle-leave" id="btn-battle-leave" aria-label="Zurück zur Festung">×</button>
+      <div>
+        <span class="battle-kicker">ARENA-KAMPF</span>
+        <h2 id="battle-arena-name">Heimatdorf</h2>
+      </div>
+      <div class="battle-timer" id="battle-timer">Bereit</div>
     </header>
-    <canvas id="battle-canvas" width="720" height="220"></canvas>
-    <div class="battle-controls">
-      <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
-      <p id="battle-result"></p>
+    <div class="orientation-prompt" role="status">
+      <span class="orientation-icon" aria-hidden="true">↻</span>
+      <strong>Bitte drehe dein Smartphone ins Querformat</strong>
+      <span>Die Arena ist für den breiten Bildschirm gestaltet.</span>
     </div>
+    <div class="battle-arena-frame">
+      <canvas id="battle-canvas" width="960" height="480" aria-label="2D-Kampfarena mit zwei Festungen und kämpfenden Truppen"></canvas>
+      <div class="battle-scoreboard" aria-label="Festungsstärke">
+        <div class="fortress-health player-health"><span>🛡 Deine Festung</span><strong id="player-fortress-health">100%</strong></div>
+        <div class="fortress-health enemy-health"><span>🏰 Gegner</span><strong id="enemy-fortress-health">100%</strong></div>
+      </div>
+      <div class="battle-energy-hud">
+        <span class="visually-hidden" id="battle-energy-label">4 / 10</span>
+        <div class="battle-progress-track energy-track" id="battle-energy-track" role="progressbar" aria-label="Energie" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4" aria-valuetext="4 von 10 Energie">
+          <div class="battle-progress-fill" id="battle-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+    <section class="battle-deck-panel" aria-label="Kampfdeck">
+      <div class="battle-deck-heading">
+        <div><span class="battle-kicker">DEINE HAND</span><h3>Truppe ausspielen</h3></div>
+        <span class="deck-count" id="battle-deck-count" aria-live="polite">Deck 8</span>
+      </div>
+      <div class="battle-play-row">
+        <div class="battle-hand" id="battle-hand"></div>
+        <aside class="battle-next" aria-label="Nächste Karte">
+          <span>NÄCHSTE</span>
+          <div id="battle-next-card"></div>
+        </aside>
+      </div>
+      <div class="battle-controls">
+        <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
+        <p id="battle-result" aria-live="polite"></p>
+      </div>
+    </section>
   </section>
 
   <!-- ===================== UNTERE NAVIGATIONSLEISTE ===================== -->

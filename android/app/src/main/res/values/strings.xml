@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Festung von Kaltmark</string>
+    <string name="title_activity_main">Festung von Kaltmark</string>
+    <string name="package_name">de.existenzlos1997.kaltmark</string>
+    <string name="custom_url_scheme">de.existenzlos1997.kaltmark</string>
+</resources>

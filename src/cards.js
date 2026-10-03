@@ -10,22 +10,48 @@ export const RARITY = {
 // Base stats are balanced around lane combat: hp/damage per hit and
 // speed expressed in lane-tiles per second.
 export const CARD_LIBRARY = [
-  { id: 'swordsman', name: 'Schwertkämpfer', rarity: RARITY.COMMON, hp: 120, damage: 20, speed: 1.0, range: 1 },
-  { id: 'archer', name: 'Bogenschütze', rarity: RARITY.COMMON, hp: 70, damage: 15, speed: 1.1, range: 4 },
-  { id: 'shieldbearer', name: 'Schildträger', rarity: RARITY.COMMON, hp: 220, damage: 10, speed: 0.7, range: 1 },
-  { id: 'knight', name: 'Ritter', rarity: RARITY.RARE, hp: 180, damage: 30, speed: 1.2, range: 1 },
-  { id: 'mage', name: 'Magier', rarity: RARITY.RARE, hp: 60, damage: 35, speed: 0.9, range: 5 },
-  { id: 'catapult', name: 'Katapult', rarity: RARITY.EPIC, hp: 150, damage: 60, speed: 0.5, range: 6 },
-  { id: 'griffin', name: 'Greif', rarity: RARITY.EPIC, hp: 140, damage: 40, speed: 1.6, range: 1 },
-  { id: 'dragon', name: 'Drache', rarity: RARITY.LEGENDARY, hp: 260, damage: 55, speed: 1.3, range: 3 },
+  { id: 'swordsman', name: 'Schwertkämpfer', rarity: RARITY.COMMON, type: 'monster', cost: 3, hp: 120, damage: 20, speed: 1.0, range: 1 },
+  { id: 'archer', name: 'Bogenschütze', rarity: RARITY.COMMON, type: 'monster', cost: 3, hp: 70, damage: 15, speed: 1.1, range: 4 },
+  { id: 'shieldbearer', name: 'Schildträger', rarity: RARITY.COMMON, type: 'monster', cost: 4, hp: 220, damage: 10, speed: 0.7, range: 1 },
+  { id: 'knight', name: 'Ritter', rarity: RARITY.RARE, type: 'monster', cost: 4, hp: 180, damage: 30, speed: 1.2, range: 1 },
+  { id: 'mage', name: 'Magier', rarity: RARITY.RARE, type: 'monster', cost: 4, hp: 60, damage: 35, speed: 0.9, range: 5 },
+  { id: 'catapult', name: 'Katapult', rarity: RARITY.EPIC, type: 'monster', cost: 5, hp: 150, damage: 60, speed: 0.5, range: 6 },
+  { id: 'griffin', name: 'Greif', rarity: RARITY.EPIC, type: 'monster', cost: 5, hp: 140, damage: 40, speed: 1.6, range: 1 },
+  { id: 'dragon', name: 'Drache', rarity: RARITY.LEGENDARY, type: 'monster', cost: 5, hp: 260, damage: 55, speed: 1.3, range: 3 },
 ];
 
+export const SPELL_LIBRARY = [
+  { id: 'pfeil', name: 'Pfeilhagel', rarity: RARITY.COMMON, type: 'spell', cost: 3, effect: 'damage', damage: 45, radius: 95 },
+  { id: 'feuer', name: 'Feuerball', rarity: RARITY.RARE, type: 'spell', cost: 4, effect: 'fire', damage: 140, radius: 60, fortressDamage: 0.7 },
+  { id: 'blitz', name: 'Blitz', rarity: RARITY.EPIC, type: 'spell', cost: 4, effect: 'lightning', damage: 110, maxTargets: 3 },
+  { id: 'heil', name: 'Heilung', rarity: RARITY.RARE, type: 'spell', cost: 3, effect: 'heal', amount: 80, radius: 100 },
+  { id: 'frost', name: 'Frost', rarity: RARITY.RARE, type: 'spell', cost: 3, effect: 'slow', duration: 4, multiplier: 0.45, radius: 100 },
+  { id: 'wut', name: 'Wut', rarity: RARITY.EPIC, type: 'spell', cost: 3, effect: 'haste', duration: 5, multiplier: 1.5, radius: 100 },
+];
+
+export const ALL_CARDS = [...CARD_LIBRARY, ...SPELL_LIBRARY];
+
 export function getCardById(id) {
-  const card = CARD_LIBRARY.find((c) => c.id === id);
+  const card = ALL_CARDS.find((c) => c.id === id);
   if (!card) {
     throw new Error(`Unknown card id: ${id}`);
   }
   return card;
+}
+
+export function getCardAtLevel(id, level = 1) {
+  if (!Number.isInteger(level) || level < 1) {
+    throw new Error(`Invalid card level: ${level}`);
+  }
+  const card = getCardById(id);
+  const multiplier = 1 + (level - 1) * 0.1;
+  return {
+    ...card,
+    ...(card.hp === undefined ? {} : { hp: Math.round(card.hp * multiplier) }),
+    ...(card.damage === undefined ? {} : { damage: Math.round(card.damage * multiplier) }),
+    ...(card.amount === undefined ? {} : { amount: Math.round(card.amount * multiplier) }),
+    ...(card.duration === undefined ? {} : { duration: card.duration * multiplier }),
+  };
 }
 
 const RARITY_WEIGHTS = {
@@ -65,4 +91,3 @@ export function pickWeightedCard(weights = RARITY_WEIGHTS, rng = Math.random) {
 export function rollRandomCard(rng = Math.random) {
   return pickWeightedCard(RARITY_WEIGHTS, rng);
 }
-

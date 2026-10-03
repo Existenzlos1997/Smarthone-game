@@ -1,6 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { simulateBattle, FORTRESS_HP } from '../src/battle.js';
+import { simulateBattle, FORTRESS_HP, interpolateFortressHealth } from '../src/battle.js';
+
+test('fortress health interpolation matches the simulated result throughout playback', () => {
+  const result = { playerFortressHp: 400, enemyFortressHp: 0 };
+  assert.deepEqual(interpolateFortressHealth(null, 0), {
+    player: FORTRESS_HP,
+    enemy: FORTRESS_HP,
+  });
+  assert.deepEqual(interpolateFortressHealth(result, 0), {
+    player: FORTRESS_HP,
+    enemy: FORTRESS_HP,
+  });
+  assert.deepEqual(interpolateFortressHealth(result, 0.5), {
+    player: 700,
+    enemy: 500,
+  });
+  assert.deepEqual(interpolateFortressHealth(result, 1), {
+    player: 400,
+    enemy: 0,
+  });
+  assert.deepEqual(interpolateFortressHealth(result, 2), {
+    player: 400,
+    enemy: 0,
+  });
+});
 
 test('the stronger deck wins a lopsided battle', () => {
   const result = simulateBattle({
