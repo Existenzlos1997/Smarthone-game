@@ -1,4 +1,4 @@
-import { DECK_SIZE, MAX_CARD_LEVEL, Player } from './src/player.js';
+import { DECK_SIZE, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, Player } from './src/player.js';
 import { CARD_LIBRARY, SPELL_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
@@ -999,9 +999,11 @@ function finishLiveBattle(winner) {
   });
   if (winner === 'player') {
     const xpGain = 40;
+    const previousLevel = player.level;
     const leveledUp = player.addXp(xpGain);
+    const levelReward = (player.level - previousLevel) * LEVEL_UP_COIN_REWARD;
     player.coins += 20;
-    resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +20 Münzen${leveledUp ? ' — Level Up!' : ''}`;
+    resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +${20 + levelReward} Münzen${leveledUp ? ` — Level Up${levelReward ? `, +${levelReward} Levelbonus` : ''}!` : ''}`;
   } else if (winner === 'enemy') {
     resultEl.textContent = 'Niederlage. -10 🏆. Verbessere dein Deck und versuche es erneut.';
   } else {

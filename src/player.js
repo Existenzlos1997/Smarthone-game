@@ -7,6 +7,7 @@ const XP_PER_LEVEL = 100;
 const DAILY_HUNT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const MAX_CARD_LEVEL = 10;
 const STARTER_GEMS = 50;
+const LEVEL_UP_COIN_REWARD = 50;
 const TROPHIES_PER_WIN = 30;
 const TROPHIES_PER_LOSS = 10;
 const CARD_UPGRADE_COST_PER_LEVEL = 50;
@@ -191,6 +192,7 @@ export class Player {
     while (this.xp >= XP_PER_LEVEL) {
       this.xp -= XP_PER_LEVEL;
       this.level += 1;
+      this.coins += LEVEL_UP_COIN_REWARD;
       leveledUp = true;
     }
     return leveledUp;
@@ -282,6 +284,7 @@ export {
   MAX_CARD_LEVEL,
   CARD_UPGRADE_COST_PER_LEVEL,
   STARTER_GEMS,
+  LEVEL_UP_COIN_REWARD,
   TROPHIES_PER_WIN,
   TROPHIES_PER_LOSS,
 };

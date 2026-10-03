@@ -26,6 +26,7 @@ bei jedem Push nach `main`.
 - **Festung/Hauptmenü**: zeigt Spieler-Level, XP-Fortschritt, Pokale/Arena-
   Fortschritt sowie Münzen und Diamanten (Clash-Royale-artig), dazu eine
   Übersicht der eigenen Kartensammlung mit Kartenstufe.
+- **Levelaufstiege**: jedes neue Spielerlevel belohnt dich mit 50 Münzen.
 - **Tägliche Jagd (Kartenjagd-Minigame)**: einmal pro 24h öffnet sich ein
   eigenes Tap-Reaktionsspiel — eine Fährte erscheint an einer zufälligen
   Position und muss innerhalb kurzer Zeit angetippt werden, bevor sie

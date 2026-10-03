@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_CARD_LEVEL, Player } from '../src/player.js';
+import { LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, Player } from '../src/player.js';
 
 test('starts at level 1 with starter cards', () => {
   const player = new Player();
@@ -18,6 +18,7 @@ test('addXp levels up once the threshold is reached', () => {
   assert.equal(leveledUp, true);
   assert.equal(player.level, 2);
   assert.equal(player.xp, 50);
+  assert.equal(player.coins, LEVEL_UP_COIN_REWARD);
 });
 
 test('addXp can trigger multiple level-ups at once', () => {
@@ -25,6 +26,7 @@ test('addXp can trigger multiple level-ups at once', () => {
   player.addXp(250);
   assert.equal(player.level, 3);
   assert.equal(player.xp, 50);
+  assert.equal(player.coins, LEVEL_UP_COIN_REWARD * 2);
 });
 
 test('addXp rejects negative amounts', () => {
