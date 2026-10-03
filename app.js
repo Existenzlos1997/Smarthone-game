@@ -7,6 +7,7 @@ import { getArenaProgress } from './src/arenas.js';
 const STORAGE_KEY = 'festungskampf.save.v1';
 const BATTLE_VISUAL_DURATION_MS = 3600;
 const TROOP_ADVANCE_END = 0.72;
+// The short clash pulse starts just before troops finish advancing.
 const CLASH_START = 0.68;
 const CLASH_END = 0.96;
 const CLASH_PULSE_FREQUENCY = 90;
@@ -127,7 +128,9 @@ function renderMenu() {
   const displayedXp = Math.max(0, Math.min(100, player.xp));
   document.getElementById('menu-xp-fill').style.width = `${displayedXp}%`;
   document.getElementById('menu-xp-count').textContent = `${displayedXp} / 100 XP`;
-  document.querySelector('.xp-track').setAttribute('aria-valuenow', displayedXp);
+  const xpTrack = document.getElementById('menu-xp-track');
+  xpTrack.setAttribute('aria-valuenow', displayedXp);
+  xpTrack.setAttribute('aria-valuetext', `${displayedXp} von 100 XP`);
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 
@@ -541,9 +544,10 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   let previousTimer;
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
-    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck);
-    const playerHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.playerFortressHp, progress) / FORTRESS_HP * 100);
-    const enemyHp = Math.round(interpolateFortressHp(FORTRESS_HP, result.enemyFortressHp, progress) / FORTRESS_HP * 100);
+    const fortressHealth = getFortressHealth(result, progress);
+    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth);
+    const playerHp = Math.round(fortressHealth.player / FORTRESS_HP * 100);
+    const enemyHp = Math.round(fortressHealth.enemy / FORTRESS_HP * 100);
     const timerText = `${Math.ceil((1 - progress) * battleDuration)}s`;
     if (playerHp !== previousPlayerHp) playerHealth.textContent = `${playerHp}%`;
     if (enemyHp !== previousEnemyHp) enemyHealth.textContent = `${enemyHp}%`;
@@ -561,11 +565,15 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   requestAnimationFrame(frame);
 }
 
-function interpolateFortressHp(startHp, endHp, progress) {
-  return startHp + (endHp - startHp) * progress;
+function getFortressHealth(result, progress) {
+  if (!result) return { player: FORTRESS_HP, enemy: FORTRESS_HP };
+  return {
+    player: FORTRESS_HP + (result.playerFortressHp - FORTRESS_HP) * progress,
+    enemy: FORTRESS_HP + (result.enemyFortressHp - FORTRESS_HP) * progress,
+  };
 }
 
-function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
+function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = getFortressHealth(result, progress)) {
   ctx.save();
   const { width, height } = canvas;
   const groundY = height * 0.69;
@@ -625,14 +633,11 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
   }
   ctx.globalAlpha = 1;
 
-  const hpProgress = progress;
-  const playerHp = result ? interpolateFortressHp(FORTRESS_HP, result.playerFortressHp, hpProgress) : FORTRESS_HP;
-  const enemyHp = result ? interpolateFortressHp(FORTRESS_HP, result.enemyFortressHp, hpProgress) : FORTRESS_HP;
-  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#45d9b0', playerHp);
+  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#45d9b0', fortressHealth.player);
   ctx.save();
   ctx.translate(width, 0);
   ctx.scale(-1, 1);
-  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#ff667b', enemyHp);
+  drawFortress(ctx, width * 0.025, groundY - height * 0.42, '#ff667b', fortressHealth.enemy);
   ctx.restore();
 
   const advance = Math.min(1, progress / TROOP_ADVANCE_END);

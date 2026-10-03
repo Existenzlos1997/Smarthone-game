@@ -246,7 +246,8 @@ body {
 .battle-topbar .btn-back { justify-self: start; }
 .battle-kicker { color: #d3b8ff; font-size: .64rem; font-weight: 900; letter-spacing: .16em; }
 .battle-timer { min-width: 58px; justify-self: end; padding: 7px 10px; border: 1px solid #ffffff32; border-radius: 999px; background: #12132bd9; color: var(--white); font-size: .78rem; font-weight: 800; text-align: center; }
-.battle-scoreboard { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 12px; margin: 0 2px -28px; pointer-events: none; }
+.battle-arena-frame { position: relative; }
+.battle-scoreboard { position: absolute; top: 0; right: 2px; left: 2px; z-index: 1; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
 .fortress-health { width: min(39%, 220px); display: grid; gap: 4px; padding: 7px 10px; border: 1px solid var(--border-light); border-radius: 0 0 10px 10px; background: #101427d9; font-size: .66rem; font-weight: 800; text-shadow: 0 1px 2px #000; }
 .fortress-health strong { color: #d8ffe7; font-size: .76rem; }
 .enemy-health { text-align: right; }

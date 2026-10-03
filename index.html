@@ -41,7 +41,7 @@
 
     <div class="player-progress">
       <span class="progress-label">STUFE <strong id="menu-level-label">1</strong></span>
-      <div class="xp-track" role="progressbar" aria-label="Erfahrung bis zum nächsten Level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="xp-track" id="menu-xp-track" role="progressbar" aria-label="Erfahrung bis zum nächsten Level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 von 100 XP">
         <div class="xp-fill" id="menu-xp-fill"></div>
       </div>
       <span class="xp-count" id="menu-xp-count">0 / 100 XP</span>
@@ -169,13 +169,15 @@
         <span class="battle-kicker">ARENA-KAMPF</span>
         <h2 id="battle-arena-name">Heimatdorf</h2>
       </div>
-      <div class="battle-timer" id="battle-timer" aria-live="polite">Bereit</div>
+      <div class="battle-timer" id="battle-timer">Bereit</div>
     </header>
-    <div class="battle-scoreboard" aria-label="Festungsstärke">
-      <div class="fortress-health player-health"><span>🛡 Deine Festung</span><strong id="player-fortress-health">100%</strong></div>
-      <div class="fortress-health enemy-health"><span>🏰 Gegner</span><strong id="enemy-fortress-health">100%</strong></div>
+    <div class="battle-arena-frame">
+      <canvas id="battle-canvas" width="960" height="480" aria-label="2D-Kampfarena mit zwei Festungen und kämpfenden Truppen"></canvas>
+      <div class="battle-scoreboard" aria-label="Festungsstärke">
+        <div class="fortress-health player-health"><span>🛡 Deine Festung</span><strong id="player-fortress-health">100%</strong></div>
+        <div class="fortress-health enemy-health"><span>🏰 Gegner</span><strong id="enemy-fortress-health">100%</strong></div>
+      </div>
     </div>
-    <canvas id="battle-canvas" width="960" height="480" aria-label="2D-Kampfarena mit zwei Festungen und kämpfenden Truppen"></canvas>
     <section class="battle-deck-panel" aria-label="Kampfdeck">
       <div class="battle-deck-heading">
         <div><span class="battle-kicker">DEIN DECK</span><h3>Truppen im Einsatz</h3></div>
@@ -185,7 +187,7 @@
     </section>
     <div class="battle-controls">
       <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
-      <p id="battle-result"></p>
+      <p id="battle-result" aria-live="polite"></p>
     </div>
   </section>
 
