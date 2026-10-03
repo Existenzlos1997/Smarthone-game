@@ -102,6 +102,17 @@ Artefakte für 14 Tage. Das Android-APK ist zum lokalen Testen vorgesehen; die
 iOS-Datei ist nur für den Simulator und keine auf einem iPhone installierbare
 oder für den Store signierte Veröffentlichung.
 
+### Android-APK installieren
+
+1. Öffne in GitHub **Actions** den erfolgreichen Lauf von **Native app builds**.
+2. Lade unter **Artifacts** `festung-von-kaltmark-android-debug` herunter und
+   entpacke die ZIP-Datei.
+3. Öffne `app-debug.apk` auf dem Android-Gerät. Falls Android nachfragt, erlaube
+   deinem Browser oder Dateimanager vorübergehend **Unbekannte Apps installieren**
+   und starte die APK erneut.
+
+Das Debug-APK ist für Tests gedacht und mit einem Debug-Schlüssel signiert.
+
 ## Tests ausführen
 
 ```bash
