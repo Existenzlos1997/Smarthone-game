@@ -68,6 +68,28 @@ npx http-server .
 # dann im Browser http://localhost:8080 öffnen
 ```
 
+## Native Android- und iOS-App (ohne Store-Veröffentlichung)
+
+Das Projekt verwendet Capacitor, um dieselbe Spieloberfläche in nativen
+Android- und iOS-Projekten auszuführen. Es wird dabei keine App in einen Store
+hochgeladen. Benötigt werden Node.js 22 oder neuer und npm. Für Android brauchst
+du zusätzlich Android Studio mit Android SDK; zum Bauen für iOS brauchst du
+macOS mit Xcode.
+
+```bash
+npm install
+npm run cap:sync
+npm run cap:open:android
+# Auf macOS zusätzlich oder stattdessen:
+npm run cap:open:ios
+```
+
+`cap:sync` baut die Webdateien neu und kopiert sie in beide nativen Projekte.
+Anschließend kannst du in Android Studio oder Xcode einen Emulator oder ein
+angeschlossenes Gerät auswählen und die App starten. Nach Änderungen am Spiel
+erneut `npm run cap:sync` ausführen. Die nativen Projektdateien liegen in
+`android/` und `ios/`; das erzeugte Web-Build unter `www/` wird nicht eingecheckt.
+
 ## Tests ausführen
 
 ```bash
