@@ -90,6 +90,12 @@ angeschlossenes Gerät auswählen und die App starten. Nach Änderungen am Spiel
 erneut `npm run cap:sync` ausführen. Die nativen Projektdateien liegen in
 `android/` und `ios/`; das erzeugte Web-Build unter `www/` wird nicht eingecheckt.
 
+Bei Pushes, Pull Requests und manuellem Start baut GitHub Actions zusätzlich ein
+Android-Debug-APK und eine iOS-Simulator-App. Beide erscheinen als Workflow-
+Artefakte für 14 Tage. Das Android-APK ist zum lokalen Testen vorgesehen; die
+iOS-Datei ist nur für den Simulator und keine auf einem iPhone installierbare
+oder für den Store signierte Veröffentlichung.
+
 ## Tests ausführen
 
 ```bash

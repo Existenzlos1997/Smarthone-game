@@ -1,0 +1,100 @@
+name: Native app builds
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Android SDK packages
+        run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install dependencies and run tests
+        run: |
+          npm ci
+          npm test
+
+      - name: Build and sync native assets
+        run: npm run cap:sync
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon assembleDebug
+        working-directory: android
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: festung-von-kaltmark-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS Simulator app
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies and run tests
+        run: |
+          npm ci
+          npm test
+
+      - name: Build and sync native assets
+        run: npm run cap:sync
+
+      - name: Build iOS Simulator app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package iOS Simulator app
+        run: ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app" "$RUNNER_TEMP/festung-von-kaltmark-ios-simulator.zip"
+
+      - name: Upload iOS Simulator app
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: festung-von-kaltmark-ios-simulator
+          path: ${{ runner.temp }}/festung-von-kaltmark-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14
