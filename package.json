@@ -4,8 +4,23 @@
   "description": "2D lane auto-battler prototype with a Clash-Royale-style menu, player levels, a daily card hunt and a fortress you equip between battles.",
   "type": "module",
   "private": true,
-  "scripts": {
-    "test": "node --test test/*.test.js"
+  "engines": {
+    "node": ">=22"
   },
-  "license": "MIT"
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build-web.js",
+    "cap:sync": "npm run build && cap sync",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.4.3",
+    "@capacitor/ios": "^8.5.2"
+  }
 }
