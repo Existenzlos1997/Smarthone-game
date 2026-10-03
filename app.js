@@ -85,6 +85,7 @@ function loadPlayer() {
       player.trophies = data.trophies ?? 0;
       player.restoreWinStreaks({ current: data.winStreak, best: data.bestWinStreak });
       player.restoreArenaRewards(data.arenaRewardsClaimed);
+      player.restoreBattleStats(data.battleStats);
       player.collection = [...new Set([...player.collection, ...(data.collection ?? [])])];
       player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
@@ -117,6 +118,7 @@ function savePlayer() {
     winStreak: player.winStreak,
     bestWinStreak: player.bestWinStreak,
     arenaRewardsClaimed: player.arenaRewardsClaimed,
+    battleStats: player.battleStats,
     collection: player.collection,
     cardLevels: player.cardLevels,
     fortressSlots: player.fortressSlots,
@@ -230,6 +232,14 @@ function renderMenu() {
   xpTrack.setAttribute('aria-valuetext', `${displayedXp} von 100 XP`);
   document.getElementById('menu-win-streak').textContent = player.winStreak;
   document.getElementById('menu-best-win-streak').textContent = player.bestWinStreak;
+  document.getElementById('career-battles').textContent = player.battleStats.battles;
+  document.getElementById('career-win-rate').textContent = player.battleStats.battles
+    ? `${Math.round(player.battleStats.wins / player.battleStats.battles * 100)}%`
+    : '—';
+  document.getElementById('career-results').textContent =
+    `${player.battleStats.wins} / ${player.battleStats.losses} / ${player.battleStats.draws}`;
+  document.getElementById('career-cards-played').textContent = player.battleStats.cardsPlayed;
+  document.getElementById('career-spells-cast').textContent = player.battleStats.spellsCast;
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 

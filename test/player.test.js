@@ -146,6 +146,52 @@ test('battle history keeps ten newest outcomes and restores only valid bounded r
   assert.deepEqual(restored.battleHistory, player.battleHistory);
 });
 
+test('career battle statistics accumulate outcomes and activity independently of history', () => {
+  const player = new Player();
+  player.recordBattle({ result: 'player', durationSeconds: 40, cardsPlayed: 5, spellsCast: 2 });
+  player.recordBattle({ result: 'enemy', durationSeconds: 30, cardsPlayed: 3, spellsCast: 1 });
+  player.recordBattle({ result: 'draw', durationSeconds: 20, cardsPlayed: 4, spellsCast: 0 });
+  assert.deepEqual(player.battleStats, {
+    battles: 3,
+    wins: 1,
+    losses: 1,
+    draws: 1,
+    cardsPlayed: 12,
+    spellsCast: 3,
+    durationSeconds: 90,
+  });
+  for (let index = 0; index < 12; index += 1) {
+    player.recordBattle({ result: 'player' });
+  }
+  assert.equal(player.battleHistory.length, 10);
+  assert.equal(player.battleStats.battles, 15);
+  assert.equal(player.battleStats.wins, 13);
+});
+
+test('career battle statistics restore only non-negative safe integer counters', () => {
+  const player = new Player();
+  player.restoreBattleStats({
+    battles: 2,
+    wins: 4,
+    losses: -1,
+    draws: Number.POSITIVE_INFINITY,
+    cardsPlayed: 12,
+    spellsCast: '3',
+    durationSeconds: 90,
+  });
+  assert.deepEqual(player.battleStats, {
+    battles: 4,
+    wins: 4,
+    losses: 0,
+    draws: 0,
+    cardsPlayed: 12,
+    spellsCast: 0,
+    durationSeconds: 90,
+  });
+  player.restoreBattleStats(null);
+  assert.equal(player.battleStats.wins, 4);
+});
+
 test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
   const player = new Player();
   player.recordBattleOutcome('player');

@@ -43,6 +43,8 @@ bei jedem Push nach `main`.
   gespeichert.
 - **Siegesserie**: aktuelle Folge und persönlicher Bestwert werden gespeichert;
   Siege verlängern sie, Niederlagen beenden sie und Remis lassen sie bestehen.
+- **Kampfstatistik**: das Profil zählt alle abgeschlossenen Kämpfe, die
+  Siegesquote sowie gespielte Karten und gewirkte Zauber dauerhaft.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.

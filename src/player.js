@@ -13,6 +13,7 @@ const TROPHIES_PER_WIN = 30;
 const TROPHIES_PER_LOSS = 10;
 const CARD_UPGRADE_COST_PER_LEVEL = 50;
 const MAX_BATTLE_HISTORY = 10;
+const MAX_STAT_COUNT = Number.MAX_SAFE_INTEGER;
 export const DAILY_QUESTS = [
   { id: 'win', label: 'Gewinne einen Arenakampf', target: 1, reward: 120 },
   { id: 'play-cards', label: 'Spiele 5 Karten aus', target: 5, reward: 80 },
@@ -54,6 +55,15 @@ export class Player {
       spellsCast: 0,
       claimed: [],
     };
+    this.battleStats = {
+      battles: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      cardsPlayed: 0,
+      spellsCast: 0,
+      durationSeconds: 0,
+    };
     this.battleHistory = [];
   }
 
@@ -72,6 +82,23 @@ export class Player {
       ...claimedIndices,
       ...ARENA_REWARDS.filter((reward) => reward.arenaIndex <= reachedArenaIndex).map((reward) => reward.arenaIndex),
     ])].sort((a, b) => a - b);
+  }
+
+  restoreBattleStats(stats) {
+    if (!stats || typeof stats !== 'object' || Array.isArray(stats)) return;
+    const validCount = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    const safeAdd = (left, right) => Math.min(MAX_STAT_COUNT, left + right);
+    this.battleStats = {
+      battles: validCount(stats.battles),
+      wins: validCount(stats.wins),
+      losses: validCount(stats.losses),
+      draws: validCount(stats.draws),
+      cardsPlayed: validCount(stats.cardsPlayed),
+      spellsCast: validCount(stats.spellsCast),
+      durationSeconds: validCount(stats.durationSeconds),
+    };
+    this.battleStats.battles = Math.max(this.battleStats.battles,
+      safeAdd(safeAdd(this.battleStats.wins, this.battleStats.losses), this.battleStats.draws));
   }
 
   restoreBattleHistory(records) {
@@ -99,17 +126,25 @@ export class Player {
 
   recordBattle({ result, trophyChange = 0, opponent = 'Übungsgegner', durationSeconds = 0, cardsPlayed = 0, spellsCast = 0, playerFortressHealth = 0, enemyFortressHealth = 0 }) {
     if (!['player', 'enemy', 'draw'].includes(result)) throw new Error(`Invalid battle result: ${result}`);
+    const boundedCount = (value, max) => Number.isSafeInteger(value) ? Math.max(0, Math.min(max, value)) : 0;
     const record = {
       result,
       playedAt: new Date(this.now()).toISOString(),
       trophyChange: Number.isSafeInteger(trophyChange) ? trophyChange : 0,
       opponent: String(opponent).slice(0, 40),
-      durationSeconds: Number.isSafeInteger(durationSeconds) ? Math.max(0, Math.min(180, durationSeconds)) : 0,
-      cardsPlayed: Number.isSafeInteger(cardsPlayed) ? Math.max(0, Math.min(100, cardsPlayed)) : 0,
-      spellsCast: Number.isSafeInteger(spellsCast) ? Math.max(0, Math.min(100, spellsCast)) : 0,
+      durationSeconds: boundedCount(durationSeconds, 180),
+      cardsPlayed: boundedCount(cardsPlayed, 100),
+      spellsCast: boundedCount(spellsCast, 100),
       playerFortressHealth: Number.isFinite(playerFortressHealth) ? Math.max(0, Math.min(100, playerFortressHealth)) : 0,
       enemyFortressHealth: Number.isFinite(enemyFortressHealth) ? Math.max(0, Math.min(100, enemyFortressHealth)) : 0,
     };
+    const counter = result === 'player' ? 'wins' : result === 'enemy' ? 'losses' : 'draws';
+    const safeAdd = (left, right) => Math.min(MAX_STAT_COUNT, left + right);
+    this.battleStats[counter] = safeAdd(this.battleStats[counter], 1);
+    this.battleStats.battles = safeAdd(this.battleStats.battles, 1);
+    this.battleStats.cardsPlayed = safeAdd(this.battleStats.cardsPlayed, record.cardsPlayed);
+    this.battleStats.spellsCast = safeAdd(this.battleStats.spellsCast, record.spellsCast);
+    this.battleStats.durationSeconds = safeAdd(this.battleStats.durationSeconds, record.durationSeconds);
     this.battleHistory.unshift(record);
     this.battleHistory.length = Math.min(this.battleHistory.length, MAX_BATTLE_HISTORY);
     return record;
