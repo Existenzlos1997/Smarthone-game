@@ -253,15 +253,17 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 .battle-leave { position: absolute; top: 48px; right: 18px; z-index: 3; width: 48px; height: 48px; border: 3px solid #ffffff80; border-radius: 50%; background: #15132bd9; box-shadow: 0 3px 12px #08071499; color: #fff; font-size: 2rem; line-height: 1; cursor: pointer; }
 .battle-arena-frame { position: relative; }
 .battle-scoreboard { position: absolute; top: 0; right: 2px; left: 2px; z-index: 1; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
+.battle-energy-hud { position: absolute; right: 0; bottom: 7px; left: 0; z-index: 2; display: flex; justify-content: center; pointer-events: none; }
+.battle-energy-hud .battle-progress-track { width: min(48%, 710px); height: 18px; margin: 0; border-width: 2px; border-color: #c481ff; background: #35234f; box-shadow: 0 2px 14px #100a22d9, 0 0 10px #bb65ff99; }
+.battle-energy-hud .battle-progress-fill { background: linear-gradient(90deg, #a634ef, #d87aff 55%, #a934ed); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .fortress-health { width: min(30%, 220px); display: grid; gap: 4px; padding: 7px 10px; border: 1px solid var(--border-light); border-radius: 0 0 10px 10px; background: #101427d9; font-size: .66rem; font-weight: 800; text-shadow: 0 1px 2px #000; }
 .fortress-health strong { color: #d8ffe7; font-size: .76rem; }
 .enemy-health { text-align: right; }
 .enemy-health strong { color: #ffd9de; }
 #battle-canvas { width: 100%; height: auto; aspect-ratio: 2 / 1; display: block; border: 1px solid #ffffff40; border-radius: 16px; background: #271c56; box-shadow: 0 16px 34px #07091d80, inset 0 0 0 2px #ffffff12; touch-action: manipulation; }
 .battle-deck-panel { margin-top: 12px; padding: 12px; border: 1px solid #ffffff24; border-radius: 16px; background: linear-gradient(145deg, #29244bef, #14172fef); box-shadow: 0 10px 26px #05071470; }
-.energy-readout { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; color: #d8b8ff; font-size: .68rem; font-weight: 900; letter-spacing: .1em; }
-.energy-readout strong { color: #fff; font-size: .75rem; letter-spacing: 0; }
-.battle-progress-track { height: 17px; overflow: hidden; margin-bottom: 7px; border: 2px solid #ae6be0; border-radius: 999px; background: #211c3b; box-shadow: inset 0 1px 3px #080714, 0 1px 8px #d56af855; }
+.battle-progress-track { height: 17px; overflow: hidden; border: 2px solid #ae6be0; border-radius: 999px; background: #211c3b; box-shadow: inset 0 1px 3px #080714, 0 1px 8px #d56af855; }
 .battle-progress-fill { width: 40%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #9b3ce0, #e483ff); box-shadow: 0 0 9px #d56af8a6; transition: width 100ms linear; }
 .battle-deck-heading { display: none; }
 .battle-deck-heading h3 { margin: 2px 0 0; font-size: .95rem; }
@@ -280,6 +282,8 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 .next-card-image { width: 52px; height: 57px; object-fit: contain; }
 .battle-next strong { position: absolute; top: -5px; left: -5px; width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #fff; border-radius: 50%; background: #9b4bd2; }
 .battle-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 7px; text-align: center; }
+body.battle-active .battle-controls { display: none; }
+body.battle-active .battle-deck-panel { padding-top: 5px; }
 .battle-controls .btn { width: min(100%, 420px); }
 #battle-result { min-height: 1em; margin: 0; font-size: .78rem; font-weight: 800; }
 .orientation-prompt { display: none; }
@@ -353,7 +357,7 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
   .battle-open .fortress-health { width: min(25%, 200px); padding: 4px 8px; font-size: .6rem; }
   .battle-open .fortress-health strong { font-size: .65rem; }
   .battle-open .battle-deck-panel { flex: 0 0 auto; margin-top: 0; padding: 6px 9px; }
-  .battle-open .battle-progress-track { height: 14px; margin-bottom: 5px; }
+  .battle-open .battle-energy-hud .battle-progress-track { width: min(48%, 710px); height: 16px; }
   .battle-open .battle-play-row { grid-template-columns: 64px minmax(0, 1fr); gap: 7px; }
   .battle-open .battle-hand { gap: 6px; }
   .battle-open .battle-card { min-height: 76px; padding: 4px 3px; }

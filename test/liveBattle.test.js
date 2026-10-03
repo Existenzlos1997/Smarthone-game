@@ -48,6 +48,27 @@ test('deployed troops march, attack enemies and create combat effects', () => {
   assert.ok(battle.effects.some((effect) => effect.kind === 'damage'));
 });
 
+test('ranged attackers emit timed projectiles toward enemy units', () => {
+  const battle = new LiveBattle({
+    playerDeck: deck,
+    enemyDeck: [...deck].reverse(),
+    enemyDefenders: ['swordsman'],
+  });
+  battle.playCard(1);
+  const archer = battle.units.find((unit) => unit.owner === 'player');
+  const enemy = battle.units.find((unit) => unit.owner === 'enemy');
+  archer.x = 5;
+  enemy.x = 7;
+  battle.step(0.05);
+  const projectile = battle.effects.find((effect) => effect.kind === 'projectile');
+  assert.ok(projectile);
+  assert.equal(projectile.fromX, archer.x);
+  assert.equal(projectile.toX, enemy.x);
+  assert.ok(projectile.duration > 0);
+  battle.step(projectile.duration + 0.05);
+  assert.equal(battle.effects.some((effect) => effect.kind === 'projectile'), false);
+});
+
 test('a destroyed fortress ends the match and prevents further card plays', () => {
   const battle = new LiveBattle({ playerDeck: deck, enemyDeck: [...deck].reverse() });
   battle.playCard(0);

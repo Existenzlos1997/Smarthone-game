@@ -95,7 +95,7 @@ export class LiveBattle {
     }
     this.effects = this.effects.filter((effect) => {
       effect.age += dt;
-      return effect.age < 0.65;
+      return effect.age < (effect.duration ?? 0.65);
     });
     const living = this.units.filter((unit) => unit.hp > 0);
 
@@ -111,7 +111,7 @@ export class LiveBattle {
       if (unit.attackCooldown > 0) continue;
       const target = this.#closestEnemy(unit, living);
       if (target && Math.abs(target.x - unit.x) <= unit.card.range) {
-        this.#damage(target, unit.card.damage);
+        this.#damage(target, unit.card.damage, unit);
         unit.attackCooldown = ATTACK_INTERVAL;
         continue;
       }
@@ -161,9 +161,22 @@ export class LiveBattle {
     return closest;
   }
 
-  #damage(target, amount) {
+  #damage(target, amount, attacker) {
     target.hp = Math.max(0, target.hp - amount);
     target.hitFlash = 0.16;
+    if (attacker.card.range > 1) {
+      const duration = Math.max(0.12, Math.abs(attacker.x - target.x) / 8.33);
+      this.effects.push({
+        x: attacker.x,
+        fromX: attacker.x,
+        toX: target.x,
+        amount,
+        owner: attacker.owner,
+        age: 0,
+        duration,
+        kind: 'projectile',
+      });
+    }
     this.effects.push({ x: target.x, amount, owner: target.owner, age: 0, kind: 'damage' });
     if (target.hp === 0) this.effects.push({ x: target.x, amount: 0, owner: target.owner, age: 0, kind: 'death' });
   }

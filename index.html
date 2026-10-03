@@ -182,12 +182,14 @@
         <div class="fortress-health player-health"><span>🛡 Deine Festung</span><strong id="player-fortress-health">100%</strong></div>
         <div class="fortress-health enemy-health"><span>🏰 Gegner</span><strong id="enemy-fortress-health">100%</strong></div>
       </div>
+      <div class="battle-energy-hud">
+        <span class="visually-hidden" id="battle-energy-label">4 / 10</span>
+        <div class="battle-progress-track energy-track" id="battle-energy-track" role="progressbar" aria-label="Energie" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4" aria-valuetext="4 von 10 Energie">
+          <div class="battle-progress-fill" id="battle-progress-fill"></div>
+        </div>
+      </div>
     </div>
     <section class="battle-deck-panel" aria-label="Kampfdeck">
-      <div class="energy-readout"><span>ENERGIE</span><strong id="battle-energy-label">4 / 10</strong></div>
-      <div class="battle-progress-track energy-track" id="battle-energy-track" role="progressbar" aria-label="Energie" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4" aria-valuetext="4 von 10 Energie">
-        <div class="battle-progress-fill" id="battle-progress-fill"></div>
-      </div>
       <div class="battle-deck-heading">
         <div><span class="battle-kicker">DEINE HAND</span><h3>Truppe ausspielen</h3></div>
         <span class="deck-count" id="battle-deck-count" aria-live="polite">Deck 8</span>

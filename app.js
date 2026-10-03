@@ -138,6 +138,7 @@ function showScreen(id) {
     document.getElementById('btn-start-battle').hidden = false;
     document.getElementById('battle-result').textContent = 'Kampf abgebrochen — kein Ergebnis gewertet.';
   }
+  if (id !== 'screen-battle') document.body.classList.remove('battle-active');
   if (id !== 'screen-hunt') cancelHuntSession();
   document.body.classList.toggle('battle-open', id === 'screen-battle');
   screens.forEach((s) => s.classList.toggle('active', s.id === id));
@@ -529,6 +530,7 @@ function renderBattleScreen() {
   document.getElementById('btn-battle-leave').textContent = '×';
   document.getElementById('btn-battle-leave').setAttribute('aria-label', 'Zurück zur Festung');
   leaveBattleDeadline = 0;
+  document.body.classList.remove('battle-active');
   setEnergyDisplay(4);
   renderBattleHand(null);
   drawBattleScene(ctx, canvas, 0, null, [], [], undefined, player.fortressSlots, []);
@@ -614,6 +616,7 @@ function runBattle(ctx, canvas) {
   document.getElementById('battle-result').textContent = 'Tippe eine Karte, um deine Truppen auszusenden.';
   document.getElementById('btn-battle-leave').textContent = '×';
   leaveBattleDeadline = 0;
+  document.body.classList.add('battle-active');
   document.getElementById('btn-battle-leave').setAttribute('aria-label', 'Zweimal tippen zum Aufgeben');
   renderBattleHand(liveBattle);
   let previousFrame = performance.now();
@@ -707,11 +710,32 @@ function drawLiveBattle(ctx, canvas, session) {
   }
   for (const effect of session.effects) {
     ctx.save();
-    ctx.globalAlpha = 1 - effect.age / 0.65;
-    ctx.fillStyle = effect.owner === 'player' ? '#fff2bc' : '#ffe1e8';
-    ctx.font = '900 18px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(effect.kind === 'death' ? '✦' : `-${effect.amount}`, effect.x / LANE_LENGTH * width, groundY - 103 - effect.age * 34);
+    if (effect.kind === 'projectile') {
+      const progress = Math.min(1, effect.age / effect.duration);
+      const eased = progress * progress * (3 - 2 * progress);
+      const x = (effect.fromX + (effect.toX - effect.fromX) * eased) / LANE_LENGTH * width;
+      const y = groundY - 50 - Math.sin(progress * Math.PI) * 42;
+      const color = effect.owner === 'player' ? '#8fffee' : '#ff9baa';
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 5 + Math.sin(performance.now() / 35) * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `${color}b3`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x - Math.sign(effect.toX - effect.fromX) * 12, y + 3);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    } else {
+      ctx.globalAlpha = 1 - effect.age / 0.65;
+      ctx.fillStyle = effect.owner === 'player' ? '#fff2bc' : '#ffe1e8';
+      ctx.font = '900 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(effect.kind === 'death' ? '✦' : `-${effect.amount}`, effect.x / LANE_LENGTH * width, groundY - 103 - effect.age * 34);
+    }
     ctx.restore();
   }
 }
@@ -730,6 +754,7 @@ function finishLiveBattle(winner) {
     resultEl.textContent = 'Unentschieden.';
   }
   savePlayer();
+  document.body.classList.remove('battle-active');
   const startBtn = document.getElementById('btn-start-battle');
   startBtn.hidden = false;
   startBtn.textContent = 'Noch einmal kämpfen';
