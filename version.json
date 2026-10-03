@@ -1,1 +1,5 @@
-{ "version": "0.1.0" }
+{
+  "version": "0.1.0",
+  "minAppVersion": "0.1.0",
+  "downloadUrl": "https://github.com/Existenzlos1997/Smarthone-game/releases/latest/download/festungskampf.apk"
+}
