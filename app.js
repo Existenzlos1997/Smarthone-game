@@ -83,6 +83,7 @@ function loadPlayer() {
       player.coins = data.coins ?? 0;
       player.gems = data.gems ?? player.gems;
       player.trophies = data.trophies ?? 0;
+      player.restoreWinStreaks({ current: data.winStreak, best: data.bestWinStreak });
       player.collection = [...new Set([...player.collection, ...(data.collection ?? [])])];
       player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
@@ -112,6 +113,8 @@ function savePlayer() {
     coins: player.coins,
     gems: player.gems,
     trophies: player.trophies,
+    winStreak: player.winStreak,
+    bestWinStreak: player.bestWinStreak,
     collection: player.collection,
     cardLevels: player.cardLevels,
     fortressSlots: player.fortressSlots,
@@ -223,6 +226,8 @@ function renderMenu() {
   const xpTrack = document.getElementById('menu-xp-track');
   xpTrack.setAttribute('aria-valuenow', displayedXp);
   xpTrack.setAttribute('aria-valuetext', `${displayedXp} von 100 XP`);
+  document.getElementById('menu-win-streak').textContent = player.winStreak;
+  document.getElementById('menu-best-win-streak').textContent = player.bestWinStreak;
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 
@@ -981,6 +986,8 @@ function drawLiveBattle(ctx, canvas, session) {
 function finishLiveBattle(winner) {
   const resultEl = document.getElementById('battle-result');
   const trophiesBefore = player.trophies;
+  const previousWinStreak = player.winStreak;
+  const previousBestWinStreak = player.bestWinStreak;
   player.recordBattleOutcome(winner);
   player.recordDailyQuestProgress({
     winner,
@@ -1003,9 +1010,12 @@ function finishLiveBattle(winner) {
     const leveledUp = player.addXp(xpGain);
     const levelReward = (player.level - previousLevel) * LEVEL_UP_COIN_REWARD;
     player.coins += 20;
-    resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +${20 + levelReward} Münzen${leveledUp ? ` — Level Up${levelReward ? `, +${levelReward} Levelbonus` : ''}!` : ''}`;
+    const streakMessage = player.winStreak > previousWinStreak
+      ? ` · ${player.winStreak} Siege in Folge${player.winStreak > previousBestWinStreak ? ' — neuer Rekord!' : ''}`
+      : '';
+    resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +${20 + levelReward} Münzen${leveledUp ? ` — Level Up${levelReward ? `, +${levelReward} Levelbonus` : ''}!` : ''}${streakMessage}`;
   } else if (winner === 'enemy') {
-    resultEl.textContent = 'Niederlage. -10 🏆. Verbessere dein Deck und versuche es erneut.';
+    resultEl.textContent = `Niederlage. -10 🏆.${previousWinStreak > 0 ? ` Siegesserie von ${previousWinStreak} beendet.` : ''} Verbessere dein Deck und versuche es erneut.`;
   } else {
     resultEl.textContent = 'Unentschieden.';
   }

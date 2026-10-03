@@ -39,6 +39,8 @@ bei jedem Push nach `main`.
 - **Kampfprotokoll**: die zehn letzten Siege, Niederlagen und Remis werden mit
   Datum, Pokaländerung, Spielzeit, gespielten Karten und Festungszustand lokal
   gespeichert.
+- **Siegesserie**: aktuelle Folge und persönlicher Bestwert werden gespeichert;
+  Siege verlängern sie, Niederlagen beenden sie und Remis lassen sie bestehen.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.

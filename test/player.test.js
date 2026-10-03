@@ -157,6 +157,25 @@ test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
   assert.equal(player.trophies, 0); // clamped at 0, not negative
 });
 
+test('win streaks increase on wins, survive draws, reset on losses and restore safely', () => {
+  const player = new Player();
+  player.recordBattleOutcome('player');
+  player.recordBattleOutcome('player');
+  assert.equal(player.winStreak, 2);
+  assert.equal(player.bestWinStreak, 2);
+  player.recordBattleOutcome('draw');
+  assert.equal(player.winStreak, 2);
+  player.recordBattleOutcome('enemy');
+  assert.equal(player.winStreak, 0);
+  assert.equal(player.bestWinStreak, 2);
+  player.restoreWinStreaks({ current: 4, best: 3 });
+  assert.equal(player.winStreak, 4);
+  assert.equal(player.bestWinStreak, 4);
+  player.restoreWinStreaks({ current: -2, best: 'bad' });
+  assert.equal(player.winStreak, 0);
+  assert.equal(player.bestWinStreak, 0);
+});
+
 test('equipping the fortress requires the card to be owned', () => {
   const player = new Player();
   player.collection = player.collection.filter((cardId) => cardId !== 'dragon');

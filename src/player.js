@@ -38,6 +38,8 @@ export class Player {
     this.coins = 0;
     this.gems = STARTER_GEMS;
     this.trophies = 0;
+    this.winStreak = 0;
+    this.bestWinStreak = 0;
     this.collection = ['swordsman', 'archer', 'shieldbearer', 'knight', 'mage', 'catapult', 'griffin', 'dragon', 'pfeil'];
     this.cardLevels = Object.fromEntries(this.collection.map((cardId) => [cardId, 1]));
     this.fortressSlots = new Array(FORTRESS_SLOTS).fill(null);
@@ -51,6 +53,12 @@ export class Player {
       claimed: [],
     };
     this.battleHistory = [];
+  }
+
+  restoreWinStreaks({ current, best } = {}) {
+    const validCount = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    this.winStreak = validCount(current);
+    this.bestWinStreak = Math.max(this.winStreak, validCount(best));
   }
 
   restoreBattleHistory(records) {
@@ -177,8 +185,11 @@ export class Player {
   recordBattleOutcome(winner) {
     if (winner === 'player') {
       this.trophies += TROPHIES_PER_WIN;
+      this.winStreak += 1;
+      this.bestWinStreak = Math.max(this.bestWinStreak, this.winStreak);
     } else if (winner === 'enemy') {
       this.trophies = Math.max(0, this.trophies - TROPHIES_PER_LOSS);
+      this.winStreak = 0;
     }
   }
 

@@ -158,6 +158,9 @@ body {
 .progress-label strong { color: #f4d78d; }
 .xp-track { height: 9px; overflow: hidden; border: 1px solid #80928a; border-radius: 9px; background: #192329; box-shadow: inset 0 1px 3px #070d11; }
 .xp-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #71c5a7, #d4cf7d); box-shadow: 0 0 8px #8fe2bf8a; transition: width 250ms ease; }
+.win-streak-summary { margin: -6px 3px 12px; color: #f0d38f; font-size: .68rem; font-weight: 800; }
+.win-streak-summary span { color: #bac7bd; font-weight: 500; }
+.win-streak-summary strong { color: #fff0bd; }
 
 .stronghold-panel { overflow: hidden; border: 1px solid #b99762; border-radius: 18px; background: var(--panel); box-shadow: 0 12px 24px #080f13a6, inset 0 0 0 2px #f0d09117; }
 .stronghold-scene { height: clamp(230px, 66vw, 340px); position: relative; overflow: hidden; background: #51606a; }
