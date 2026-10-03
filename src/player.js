@@ -1,5 +1,6 @@
 import { getCardById } from './cards.js';
 import { rollHuntReward } from './huntGame.js';
+import { ARENAS, ARENA_REWARDS, getArenaProgress } from './arenas.js';
 
 const DECK_SIZE = 8;
 const FORTRESS_SLOTS = 4;
@@ -40,6 +41,7 @@ export class Player {
     this.trophies = 0;
     this.winStreak = 0;
     this.bestWinStreak = 0;
+    this.arenaRewardsClaimed = [];
     this.collection = ['swordsman', 'archer', 'shieldbearer', 'knight', 'mage', 'catapult', 'griffin', 'dragon', 'pfeil'];
     this.cardLevels = Object.fromEntries(this.collection.map((cardId) => [cardId, 1]));
     this.fortressSlots = new Array(FORTRESS_SLOTS).fill(null);
@@ -59,6 +61,17 @@ export class Player {
     const validCount = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
     this.winStreak = validCount(current);
     this.bestWinStreak = Math.max(this.winStreak, validCount(best));
+  }
+
+  restoreArenaRewards(claimed = []) {
+    const reachedArenaIndex = ARENAS.indexOf(getArenaProgress(this.trophies).current);
+    const claimedIndices = Array.isArray(claimed)
+      ? claimed.filter((index) => Number.isSafeInteger(index) && index >= 1 && index < ARENAS.length)
+      : [];
+    this.arenaRewardsClaimed = [...new Set([
+      ...claimedIndices,
+      ...ARENA_REWARDS.filter((reward) => reward.arenaIndex <= reachedArenaIndex).map((reward) => reward.arenaIndex),
+    ])].sort((a, b) => a - b);
   }
 
   restoreBattleHistory(records) {
@@ -183,6 +196,7 @@ export class Player {
 
   /** Applies the trophy change for a finished battle (never below 0). */
   recordBattleOutcome(winner) {
+    const previousArenaIndex = ARENAS.indexOf(getArenaProgress(this.trophies).current);
     if (winner === 'player') {
       this.trophies += TROPHIES_PER_WIN;
       this.winStreak += 1;
@@ -191,6 +205,16 @@ export class Player {
       this.trophies = Math.max(0, this.trophies - TROPHIES_PER_LOSS);
       this.winStreak = 0;
     }
+    const currentArenaIndex = ARENAS.indexOf(getArenaProgress(this.trophies).current);
+    const rewards = ARENA_REWARDS.filter((reward) =>
+      reward.arenaIndex > previousArenaIndex
+      && reward.arenaIndex <= currentArenaIndex
+      && !this.arenaRewardsClaimed.includes(reward.arenaIndex));
+    for (const reward of rewards) {
+      this.arenaRewardsClaimed.push(reward.arenaIndex);
+      this.coins += reward.coins;
+    }
+    return rewards.map((reward) => ({ ...reward, arena: ARENAS[reward.arenaIndex] }));
   }
 
   /** Adds XP and rolls level-ups over as many thresholds as needed. */

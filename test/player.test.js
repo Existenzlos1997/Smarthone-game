@@ -176,6 +176,27 @@ test('win streaks increase on wins, survive draws, reset on losses and restore s
   assert.equal(player.bestWinStreak, 0);
 });
 
+test('arena promotion rewards are granted once and old saves do not claim past arenas again', () => {
+  const player = new Player();
+  player.trophies = 149;
+  const [reward] = player.recordBattleOutcome('player');
+  assert.deepEqual(reward, { arenaIndex: 1, coins: 100, arena: { name: 'Arena 2: Kaltmark', threshold: 150 } });
+  assert.equal(player.coins, 100);
+  assert.deepEqual(player.arenaRewardsClaimed, [1]);
+
+  player.trophies = 149;
+  assert.deepEqual(player.recordBattleOutcome('player'), []);
+  assert.equal(player.coins, 100);
+
+  const restored = new Player();
+  restored.trophies = 350;
+  restored.restoreArenaRewards();
+  assert.deepEqual(restored.arenaRewardsClaimed, [1, 2]);
+  restored.trophies = 349;
+  assert.deepEqual(restored.recordBattleOutcome('player'), []);
+  assert.equal(restored.coins, 0);
+});
+
 test('equipping the fortress requires the card to be owned', () => {
   const player = new Player();
   player.collection = player.collection.filter((cardId) => cardId !== 'dragon');

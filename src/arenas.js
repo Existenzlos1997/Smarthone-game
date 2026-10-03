@@ -10,6 +10,14 @@ export const ARENAS = [
   { name: 'Arena 6: Himmelszitadelle', threshold: 1300 },
 ];
 
+export const ARENA_REWARDS = [
+  { arenaIndex: 1, coins: 100 },
+  { arenaIndex: 2, coins: 150 },
+  { arenaIndex: 3, coins: 200 },
+  { arenaIndex: 4, coins: 250 },
+  { arenaIndex: 5, coins: 300 },
+];
+
 /**
  * Returns the current arena for the given trophy count plus the trophy
  * threshold of the next arena (or null if already at the highest arena).

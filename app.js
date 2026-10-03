@@ -84,6 +84,7 @@ function loadPlayer() {
       player.gems = data.gems ?? player.gems;
       player.trophies = data.trophies ?? 0;
       player.restoreWinStreaks({ current: data.winStreak, best: data.bestWinStreak });
+      player.restoreArenaRewards(data.arenaRewardsClaimed);
       player.collection = [...new Set([...player.collection, ...(data.collection ?? [])])];
       player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
@@ -115,6 +116,7 @@ function savePlayer() {
     trophies: player.trophies,
     winStreak: player.winStreak,
     bestWinStreak: player.bestWinStreak,
+    arenaRewardsClaimed: player.arenaRewardsClaimed,
     collection: player.collection,
     cardLevels: player.cardLevels,
     fortressSlots: player.fortressSlots,
@@ -988,7 +990,7 @@ function finishLiveBattle(winner) {
   const trophiesBefore = player.trophies;
   const previousWinStreak = player.winStreak;
   const previousBestWinStreak = player.bestWinStreak;
-  player.recordBattleOutcome(winner);
+  const arenaRewards = player.recordBattleOutcome(winner);
   player.recordDailyQuestProgress({
     winner,
     cardsPlayed: liveBattle.playerCardsPlayed,
@@ -1018,6 +1020,9 @@ function finishLiveBattle(winner) {
     resultEl.textContent = `Niederlage. -10 🏆.${previousWinStreak > 0 ? ` Siegesserie von ${previousWinStreak} beendet.` : ''} Verbessere dein Deck und versuche es erneut.`;
   } else {
     resultEl.textContent = 'Unentschieden.';
+  }
+  if (arenaRewards.length) {
+    resultEl.textContent += ` Neue Arena: ${arenaRewards.map(({ arena, coins }) => `${arena.name} · +${coins} Münzen`).join(', ')}!`;
   }
   savePlayer();
   document.body.classList.remove('battle-active');
