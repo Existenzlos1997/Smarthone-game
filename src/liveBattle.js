@@ -207,7 +207,11 @@ export class LiveBattle {
 
   #enemyDeploy() {
     const affordable = this.enemyHand
-      .map((cardId, index) => ({ cardId, index, card: getCardById(cardId) }))
+      .map((cardId, index) => ({
+        cardId,
+        index,
+        card: getCardAtLevel(cardId, this.enemyCardLevels[cardId] ?? 1),
+      }))
       .filter((entry) => entry.card.cost <= this.enemyEnergy);
     const spellChoices = affordable
       .filter((entry) => entry.card.type === 'spell')

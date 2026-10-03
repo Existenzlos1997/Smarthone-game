@@ -142,6 +142,7 @@ test('enemy AI casts damage spells against player units', () => {
   const battle = new LiveBattle({
     playerDeck: deck,
     enemyDeck: ['pfeil', ...deck.slice(0, 7)],
+    enemyCardLevels: { pfeil: 3 },
   });
   battle.playCard(0);
   const swordsman = battle.units.find((unit) => unit.owner === 'player');
@@ -149,7 +150,7 @@ test('enemy AI casts damage spells against player units', () => {
   swordsman.stationary = true;
   battle.enemyEnergy = MAX_ENERGY;
   battle.step(1.5);
-  assert.equal(swordsman.hp, swordsman.card.hp - 45);
+  assert.equal(swordsman.hp, swordsman.card.hp - 54);
   assert.ok(battle.effects.some((effect) => effect.kind === 'spell-burst' && effect.spellId === 'pfeil' && effect.owner === 'enemy'));
   assert.equal(battle.enemyQueue.at(-1), 'pfeil');
 });
