@@ -157,6 +157,19 @@
       <div id="achievements" class="daily-quests"></div>
     </section>
 
+    <section class="save-backup-section" aria-labelledby="save-backup-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">LOKALE SICHERUNG</span><h2 class="section-title" id="save-backup-title">Spielstand sichern</h2></div>
+      </div>
+      <p class="hint">Exportiere eine Sicherungsdatei, um deinen Fortschritt auf einem anderen Gerät wiederherzustellen.</p>
+      <div class="save-backup-actions">
+        <button class="btn btn-secondary" id="btn-export-save" type="button">Sicherung exportieren</button>
+        <button class="btn btn-secondary" id="btn-import-save" type="button">Sicherung importieren</button>
+        <input id="import-save-input" type="file" accept="application/json,.json" hidden>
+      </div>
+      <p id="backup-result" class="shop-result" aria-live="polite"></p>
+    </section>
+
     <section class="battle-history-section" aria-labelledby="battle-history-title">
       <div class="section-heading">
         <div><span class="eyebrow">DEINE LETZTEN KÄMPFE</span><h2 class="section-title" id="battle-history-title">Kampfprotokoll</h2></div>

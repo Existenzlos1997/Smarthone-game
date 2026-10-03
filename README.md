@@ -46,6 +46,9 @@ bei jedem Push nach `main`.
   Siege verlängern sie, Niederlagen beenden sie und Remis lassen sie bestehen.
 - **Kampfstatistik**: das Profil zählt alle abgeschlossenen Kämpfe, die
   Siegesquote sowie gespielte Karten und gewirkte Zauber dauerhaft.
+- **Lokale Sicherung**: Spielstände können als JSON-Datei exportiert und auf
+  einem anderen Gerät wiederhergestellt werden. Beim Import wird der bestehende
+  Spielstand nach Bestätigung ersetzt.
 - **Errungenschaften**: dauerhafte Kampfziele belohnen erreichte Meilensteine
   bei Kämpfen, Siegen, gespielten Karten und gewirkten Zaubern einmalig mit
   Münzen.

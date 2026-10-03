@@ -219,6 +219,9 @@ body {
 .achievements-section { margin-top: 18px; }
 
 .collection-section { margin-top: 19px; }
+.save-backup-section { margin-top: 18px; }
+.save-backup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.save-backup-actions .btn { flex: 1 1 150px; }
 .battle-history-section { margin-top: 18px; }
 .battle-history { display: grid; gap: 7px; }
 .battle-history-empty { margin: 0; padding: 13px; border: 1px dashed #65766b; border-radius: 12px; color: #bdc9bc; font-size: .72rem; text-align: center; }

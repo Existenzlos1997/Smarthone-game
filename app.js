@@ -4,6 +4,7 @@ import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battl
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 import { getArenaCardLevel, getArenaProgress } from './src/arenas.js';
+import { createSaveBackup, parseSaveBackup, MAX_BACKUP_BYTES } from './src/saveBackup.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
 const TROOP_ADVANCE_END = 0.72;
@@ -117,7 +118,11 @@ function loadPlayer() {
 }
 
 function savePlayer() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(getPlayerSaveData()));
+}
+
+function getPlayerSaveData() {
+  return {
     name: player.name,
     avatar: player.avatar,
     level: player.level,
@@ -137,7 +142,7 @@ function savePlayer() {
     lastHuntAt: player.lastHuntAt,
     dailyQuestProgress: player.dailyQuestProgress,
     battleHistory: player.battleHistory,
-  }));
+  };
 }
 
 const player = loadPlayer();
@@ -211,6 +216,38 @@ document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('c
   showScreen(btn.dataset.nav);
 }));
 document.getElementById('btn-share').addEventListener('click', onShare);
+document.getElementById('btn-export-save').addEventListener('click', () => {
+  try {
+    const backup = createSaveBackup(getPlayerSaveData());
+    const objectUrl = URL.createObjectURL(new Blob([backup], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `festungskampf-sicherung-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    document.getElementById('backup-result').textContent = 'Sicherung wurde erstellt. Bewahre die Datei sicher auf.';
+  } catch (error) {
+    document.getElementById('backup-result').textContent = error.message;
+  }
+});
+const importSaveInput = document.getElementById('import-save-input');
+document.getElementById('btn-import-save').addEventListener('click', () => importSaveInput.click());
+importSaveInput.addEventListener('change', async () => {
+  const [file] = importSaveInput.files ?? [];
+  if (!file) return;
+  const result = document.getElementById('backup-result');
+  try {
+    if (file.size > MAX_BACKUP_BYTES) throw new Error('Die Sicherungsdatei ist zu groß.');
+    const importedSave = parseSaveBackup(await file.text());
+    if (!confirm('Der aktuelle Spielstand wird vollständig durch die Sicherung ersetzt. Fortfahren?')) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(importedSave));
+    window.location.reload();
+  } catch (error) {
+    result.textContent = error.message;
+  } finally {
+    importSaveInput.value = '';
+  }
+});
 const playerNameDialog = document.getElementById('player-name-dialog');
 const playerNameInput = document.getElementById('player-name-input');
 const avatarOptions = document.getElementById('avatar-options');
