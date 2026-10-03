@@ -96,6 +96,9 @@ const navButtons = document.querySelectorAll('.nav-btn');
 let battleAnimationFrame = null;
 
 function showScreen(id) {
+  if (id !== 'screen-battle' && typeof screen.orientation?.unlock === 'function') {
+    screen.orientation.unlock();
+  }
   if (id !== 'screen-battle' && battleAnimationFrame !== null) {
     cancelAnimationFrame(battleAnimationFrame);
     battleAnimationFrame = null;
@@ -103,6 +106,7 @@ function showScreen(id) {
     document.getElementById('battle-result').textContent = 'Kampf abgebrochen — kein Ergebnis gewertet.';
   }
   if (id !== 'screen-hunt') cancelHuntSession();
+  document.body.classList.toggle('battle-open', id === 'screen-battle');
   screens.forEach((s) => s.classList.toggle('active', s.id === id));
   navButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === id));
   if (id === 'screen-fortress') renderFortressScreen();
@@ -112,7 +116,12 @@ function showScreen(id) {
   if (id === 'screen-hunt') startHuntSession();
 }
 
-document.getElementById('btn-battle').addEventListener('click', () => showScreen('screen-battle'));
+document.getElementById('btn-battle').addEventListener('click', () => {
+  showScreen('screen-battle');
+  if (typeof screen.orientation?.lock === 'function') {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+});
 document.getElementById('btn-fortress').addEventListener('click', () => showScreen('screen-fortress'));
 document.querySelectorAll('[data-back]').forEach((btn) => btn.addEventListener('click', () => showScreen('screen-menu')));
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => {
