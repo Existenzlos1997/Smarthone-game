@@ -518,7 +518,7 @@ function renderBattleScreen() {
   document.querySelector('.battle-progress-track').setAttribute('aria-valuetext', 'Bereit');
   document.getElementById('battle-progress-label').textContent = 'Bereit';
   renderBattleHand();
-  drawBattleScene(ctx, canvas, 0, null, player.deck, []);
+  drawBattleScene(ctx, canvas, 0, null, player.deck, [], undefined, player.fortressSlots, []);
   document.getElementById('battle-result').textContent = '';
   const startBtn = document.getElementById('btn-start-battle');
   startBtn.disabled = !player.isDeckReady();
@@ -565,7 +565,7 @@ function runBattle(ctx, canvas) {
   startBtn.disabled = true;
   document.getElementById('battle-result').textContent = 'Die Truppen rücken vor …';
 
-  animateResult(ctx, canvas, lastResult, player.deck, enemy.deck, () => {
+  animateResult(ctx, canvas, lastResult, player.deck, enemy.deck, player.fortressSlots, enemy.defenders, () => {
     const resultEl = document.getElementById('battle-result');
     player.recordBattleOutcome(lastResult.winner);
     if (lastResult.winner === 'player') {
@@ -585,7 +585,7 @@ function runBattle(ctx, canvas) {
   });
 }
 
-function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
+function animateResult(ctx, canvas, result, playerDeck, enemyDeck, playerDefenders, enemyDefenders, onDone) {
   const durationMs = BATTLE_VISUAL_DURATION_MS;
   const start = performance.now();
   const battleDuration = result.durationSeconds;
@@ -602,7 +602,7 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
     const fortressHealth = interpolateFortressHealth(result, progress);
-    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth);
+    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth, playerDefenders, enemyDefenders);
     const playerHp = Math.round(fortressHealth.player / FORTRESS_HP * 100);
     const enemyHp = Math.round(fortressHealth.enemy / FORTRESS_HP * 100);
     const timerText = `${Math.ceil((1 - progress) * battleDuration)}s`;
@@ -632,7 +632,7 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   battleAnimationFrame = requestAnimationFrame(frame);
 }
 
-function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = interpolateFortressHealth(result, progress)) {
+function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = interpolateFortressHealth(result, progress), playerDefenders = [], enemyDefenders = []) {
   ctx.save();
   const { width, height } = canvas;
   const groundY = height * ARENA_LAYOUT.groundHeight;
@@ -700,11 +700,19 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, f
   ctx.globalAlpha = 1;
 
   drawFortress(ctx, width * ARENA_LAYOUT.fortressLeft, groundY - height * ARENA_LAYOUT.fortressHeight, '#45d9b0', fortressHealth.player);
+  drawFortressGuards(ctx, width * ARENA_LAYOUT.fortressLeft, groundY - height * ARENA_LAYOUT.fortressHeight, playerDefenders, true);
   ctx.save();
   ctx.translate(width, 0);
   ctx.scale(-1, 1);
   drawFortress(ctx, width * ARENA_LAYOUT.fortressLeft, groundY - height * ARENA_LAYOUT.fortressHeight, '#ff667b', fortressHealth.enemy);
   ctx.restore();
+  drawFortressGuards(
+    ctx,
+    width * (1 - ARENA_LAYOUT.fortressLeft) - FORTRESS_TOWER_WIDTH - 28,
+    groundY - height * ARENA_LAYOUT.fortressHeight,
+    enemyDefenders,
+    false,
+  );
 
   const advance = Math.min(1, progress / TROOP_ADVANCE_END);
   drawTroops(ctx, playerDeck, advance, true, groundY, width);
@@ -718,6 +726,31 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, f
     ctx.fillText('✦', width * 0.5, groundY - height * 0.12);
   }
   ctx.restore();
+}
+
+function drawFortressGuards(ctx, fortressX, fortressY, defenders, isPlayer) {
+  const guards = Array.isArray(defenders) ? defenders.filter(Boolean).slice(0, 4) : [];
+  if (guards.length === 0) return;
+  const spacing = 27;
+  const firstX = fortressX + 61 - ((guards.length - 1) * spacing) / 2;
+  const time = performance.now() / 700;
+  guards.forEach((cardId, index) => {
+    const sprite = getMonsterSprite(cardId);
+    if (!sprite.complete || sprite.naturalWidth === 0) return;
+    const bob = Math.sin(time + index * 1.5) * 1.3;
+    const x = firstX + index * spacing;
+    ctx.fillStyle = isPlayer ? '#45d9b0' : '#ff667b';
+    ctx.beginPath();
+    ctx.ellipse(x, fortressY + 53 + bob, 13, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(x, fortressY + 51 + bob);
+    ctx.scale(isPlayer ? 1 : -1, 1);
+    ctx.shadowColor = '#0d1028b3';
+    ctx.shadowBlur = 5;
+    ctx.drawImage(sprite, -17, -37, 34, 38);
+    ctx.restore();
+  });
 }
 
 function drawHill(ctx, width, groundY, heightRatio, color, offset) {
