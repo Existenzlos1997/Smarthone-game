@@ -105,6 +105,11 @@ body {
 .player-name-dialog h2 { margin: 0 0 14px; font-size: 1.1rem; }
 .player-name-dialog label { display: block; margin-bottom: 6px; color: #c3cfbf; font-size: .8rem; }
 .player-name-dialog input { width: 100%; padding: 10px; border: 1px solid #75827b; border-radius: 9px; background: #172329; color: var(--ink); font: inherit; }
+.avatar-picker { margin: 16px 0 0; padding: 0; border: 0; }
+.avatar-picker legend { margin-bottom: 8px; color: #c3cfbf; font-size: .8rem; }
+.avatar-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.avatar-option { min-height: 42px; border: 1px solid #75827b; border-radius: 10px; background: #172329; font-size: 1.35rem; cursor: pointer; }
+.avatar-option.selected { border-color: #f2d38e; background: #52634c; box-shadow: 0 0 0 2px #f2d38e55; }
 .player-name-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .level-medallion {
   width: 37px;

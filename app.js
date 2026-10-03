@@ -1,4 +1,4 @@
-import { DECK_SIZE, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, Player } from './src/player.js';
+import { DECK_SIZE, LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from './src/player.js';
 import { CARD_LIBRARY, SPELL_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
@@ -84,6 +84,7 @@ function loadPlayer() {
         } catch {
         }
       }
+      if (PLAYER_AVATARS.includes(data.avatar)) player.setAvatar(data.avatar);
       player.level = data.level ?? 1;
       player.xp = data.xp ?? 0;
       player.coins = data.coins ?? 0;
@@ -118,6 +119,7 @@ function loadPlayer() {
 function savePlayer() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     name: player.name,
+    avatar: player.avatar,
     level: player.level,
     xp: player.xp,
     coins: player.coins,
@@ -211,11 +213,34 @@ document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('c
 document.getElementById('btn-share').addEventListener('click', onShare);
 const playerNameDialog = document.getElementById('player-name-dialog');
 const playerNameInput = document.getElementById('player-name-input');
+const avatarOptions = document.getElementById('avatar-options');
+for (const avatar of PLAYER_AVATARS) {
+  const option = document.createElement('button');
+  option.type = 'button';
+  option.className = 'avatar-option';
+  option.textContent = avatar;
+  option.setAttribute('aria-label', `Avatar ${avatar}`);
+  option.addEventListener('click', () => {
+    player.setAvatar(avatar);
+    savePlayer();
+    renderMenu();
+    renderAvatarOptions();
+  });
+  avatarOptions.appendChild(option);
+}
+function renderAvatarOptions() {
+  avatarOptions.querySelectorAll('.avatar-option').forEach((option) => {
+    const selected = option.textContent === player.avatar;
+    option.classList.toggle('selected', selected);
+    option.setAttribute('aria-pressed', String(selected));
+  });
+}
 document.getElementById('btn-edit-player-name').addEventListener('click', () => {
   playerNameInput.setCustomValidity('');
   playerNameInput.value = player.name;
   playerNameDialog.showModal();
   playerNameInput.focus();
+  renderAvatarOptions();
 });
 document.getElementById('btn-cancel-player-name').addEventListener('click', () => playerNameDialog.close());
 document.getElementById('player-name-form').addEventListener('submit', (event) => {
@@ -252,6 +277,7 @@ function onShare() {
 // ---------------------------------------------------------------- menu / fortress overview
 function renderMenu() {
   document.getElementById('menu-fortress-title').textContent = `Festung von ${player.name}`;
+  document.getElementById('player-avatar').textContent = player.avatar;
   document.getElementById('menu-level').textContent = player.level;
   document.getElementById('menu-level').setAttribute('aria-label', `Spielerstufe ${player.level}`);
   document.getElementById('menu-level-label').textContent = player.level;

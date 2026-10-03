@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, Player } from '../src/player.js';
+import { LEVEL_UP_COIN_REWARD, MAX_CARD_LEVEL, PLAYER_AVATARS, Player } from '../src/player.js';
 
 test('starts at level 1 with starter cards', () => {
   const player = new Player();
@@ -22,6 +22,13 @@ test('player names are trimmed, bounded and reject empty or control-character va
   assert.throws(() => player.setName('Name\u0085'), /visible text/);
   assert.throws(() => player.setName('a'.repeat(21)), /at most 20/);
   assert.throws(() => player.setName(null), /must be text/);
+});
+
+test('player avatars are restricted to the curated choices', () => {
+  const player = new Player();
+  assert.equal(player.avatar, PLAYER_AVATARS[0]);
+  assert.equal(player.setAvatar(PLAYER_AVATARS[3]), PLAYER_AVATARS[3]);
+  assert.throws(() => player.setAvatar('<img src=x onerror=alert(1)>'), /Unknown player avatar/);
 });
 
 test('addXp levels up once the threshold is reached', () => {

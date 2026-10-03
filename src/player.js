@@ -15,6 +15,7 @@ const TROPHIES_PER_LOSS = 10;
 const CARD_UPGRADE_COST_PER_LEVEL = 50;
 const MAX_BATTLE_HISTORY = 10;
 const MAX_STAT_COUNT = Number.MAX_SAFE_INTEGER;
+export const PLAYER_AVATARS = ['🧙', '🛡️', '🦊', '🐉', '🦁', '🧝', '🧟', '🦅'];
 export const DAILY_QUESTS = [
   { id: 'win', label: 'Gewinne einen Arenakampf', target: 1, reward: 120 },
   { id: 'play-cards', label: 'Spiele 5 Karten aus', target: 5, reward: 80 },
@@ -43,6 +44,7 @@ export class Player {
   constructor({ name = 'Spieler', now = () => Date.now() } = {}) {
     this.name = 'Spieler';
     this.setName(name);
+    this.avatar = PLAYER_AVATARS[0];
     this.now = now;
     this.level = 1;
     this.xp = 0;
@@ -88,6 +90,12 @@ export class Player {
     }
     this.name = normalizedName;
     return this.name;
+  }
+
+  setAvatar(avatar) {
+    if (!PLAYER_AVATARS.includes(avatar)) throw new Error('Unknown player avatar');
+    this.avatar = avatar;
+    return this.avatar;
   }
 
   restoreWinStreaks({ current, best } = {}) {

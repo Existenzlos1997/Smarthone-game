@@ -20,7 +20,7 @@
   <section id="screen-menu" class="screen active">
     <header class="home-header">
       <div class="profile-chip">
-        <div class="profile-avatar" aria-hidden="true">🧙</div>
+        <div class="profile-avatar" id="player-avatar" aria-hidden="true">🧙</div>
         <div class="profile-copy">
           <span class="eyebrow">DEIN AUSSENPOSTEN</span>
           <div class="profile-name-row">
@@ -42,6 +42,10 @@
         <h2 id="player-name-title">Spielername ändern</h2>
         <label for="player-name-input">Dein Name</label>
         <input id="player-name-input" name="name" type="text" maxlength="20" autocomplete="nickname" required>
+        <fieldset class="avatar-picker">
+          <legend>Dein Avatar</legend>
+          <div id="avatar-options" class="avatar-options"></div>
+        </fieldset>
         <div class="player-name-actions">
           <button class="btn btn-secondary" id="btn-cancel-player-name" type="button">Abbrechen</button>
           <button class="btn btn-primary" type="submit">Speichern</button>
