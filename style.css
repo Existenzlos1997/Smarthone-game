@@ -185,6 +185,16 @@ body {
 .hunt-status { min-height: 1.4em; text-align: left; }
 .daily-action { width: 36px; height: 36px; border: 1px solid #d0b77b; border-radius: 11px; background: #a77c4d; color: #fff4d9; font-size: 1.2rem; cursor: pointer; }
 
+.daily-quests-section { margin-top: 18px; }
+.daily-quests { display: grid; gap: 7px; }
+.daily-quest { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #596e63; border-radius: 12px; background: linear-gradient(120deg, #293b39, #26343a); }
+.daily-quest.completed { border-color: #9eb783; }
+.daily-quest-details { min-width: 0; display: grid; gap: 4px; }
+.daily-quest-details strong { font-size: .72rem; }
+.daily-quest-details span { color: #c3cfbf; font-size: .62rem; }
+.quest-claim { min-height: 36px; padding: 6px 10px; font-size: .64rem; white-space: nowrap; }
+.quest-claim:disabled { filter: brightness(.58); cursor: default; }
+
 .collection-section { margin-top: 19px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
 .section-title { margin: 2px 0 0; font-size: 1.1rem; }

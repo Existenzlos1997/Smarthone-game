@@ -80,6 +80,42 @@ test('card upgrades spend increasing coin costs and stop at the maximum level', 
   assert.throws(() => player.upgradeCard('archer'), /maximum level/);
 });
 
+test('daily battle quests track progress and award each coin reward only once', () => {
+  const player = new Player({ now: () => Date.parse('2026-10-03T12:00:00Z') });
+  player.recordDailyQuestProgress({ winner: 'player', cardsPlayed: 5, spellsCast: 2 });
+  assert.deepEqual(
+    player.getDailyQuests().map(({ id, progress, completed, claimed }) => ({ id, progress, completed, claimed })),
+    [
+      { id: 'win', progress: 1, completed: true, claimed: false },
+      { id: 'play-cards', progress: 5, completed: true, claimed: false },
+      { id: 'cast-spells', progress: 2, completed: true, claimed: false },
+    ],
+  );
+  assert.throws(() => player.claimDailyQuest('unknown'));
+  assert.deepEqual(player.claimDailyQuest('win'), { questId: 'win', reward: 120, coins: 120 });
+  assert.throws(() => player.claimDailyQuest('win'), /already claimed/);
+  assert.equal(player.claimDailyQuest('play-cards').coins, 200);
+  assert.equal(player.claimDailyQuest('cast-spells').coins, 260);
+});
+
+test('daily battle quests reset by UTC date and ignore invalid restored progress', () => {
+  let now = Date.parse('2026-10-03T23:59:00Z');
+  const player = new Player({ now: () => now });
+  player.recordDailyQuestProgress({ winner: 'player', cardsPlayed: 4, spellsCast: 1 });
+  player.restoreDailyQuestProgress({
+    day: '2026-10-03',
+    wins: 99,
+    cardsPlayed: 2,
+    spellsCast: 1,
+    claimed: ['win', 'not-a-quest'],
+  });
+  assert.deepEqual(player.getDailyQuests().map((quest) => quest.progress), [1, 2, 1]);
+  assert.equal(player.getDailyQuests()[0].claimed, true);
+  now += 60 * 1000;
+  assert.deepEqual(player.getDailyQuests().map((quest) => quest.progress), [0, 0, 0]);
+  assert.equal(player.getDailyQuests().some((quest) => quest.claimed), false);
+});
+
 test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
   const player = new Player();
   player.recordBattleOutcome('player');

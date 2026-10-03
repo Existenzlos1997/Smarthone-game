@@ -95,6 +95,7 @@ function loadPlayer() {
         player.deck = data.deck;
       }
       player.lastHuntAt = data.lastHuntAt ?? null;
+      player.restoreDailyQuestProgress(data.dailyQuestProgress);
     } catch (err) {
       console.warn('Konnte Spielstand nicht laden, starte neu.', err);
     }
@@ -115,6 +116,7 @@ function savePlayer() {
     fortressSlots: player.fortressSlots,
     deck: player.deck,
     lastHuntAt: player.lastHuntAt,
+    dailyQuestProgress: player.dailyQuestProgress,
   }));
 }
 
@@ -250,6 +252,8 @@ function renderMenu() {
     ? 'Tägliche Jagd verfügbar — tippe auf „Jagd“ unten!'
     : `Nächste Jagd in ca. ${Math.ceil(player.msUntilNextHunt() / (60 * 60 * 1000))} Std.`;
 
+  renderDailyQuests();
+
   const collectionEl = document.getElementById('menu-collection');
   collectionEl.innerHTML = '';
   player.collection.forEach((cardId) => {
@@ -257,6 +261,39 @@ function renderMenu() {
   });
   const battleArena = document.getElementById('battle-arena-name');
   if (battleArena) battleArena.textContent = current.name;
+}
+
+function renderDailyQuests() {
+  const questsEl = document.getElementById('daily-quests');
+  if (!questsEl) return;
+  questsEl.replaceChildren();
+  for (const quest of player.getDailyQuests()) {
+    const card = document.createElement('article');
+    card.className = `daily-quest${quest.completed ? ' completed' : ''}`;
+    const details = document.createElement('div');
+    details.className = 'daily-quest-details';
+    const title = document.createElement('strong');
+    title.textContent = quest.label;
+    const progress = document.createElement('span');
+    progress.textContent = `${quest.progress}/${quest.target} · Belohnung ${quest.reward} ◉`;
+    details.append(title, progress);
+    const claim = document.createElement('button');
+    claim.type = 'button';
+    claim.className = 'btn btn-secondary quest-claim';
+    claim.disabled = !quest.completed || quest.claimed;
+    claim.textContent = quest.claimed ? 'Erhalten' : 'Abholen';
+    claim.addEventListener('click', () => {
+      try {
+        player.claimDailyQuest(quest.id);
+        savePlayer();
+        renderMenu();
+      } catch (error) {
+        document.getElementById('quest-result').textContent = error.message;
+      }
+    });
+    card.append(details, claim);
+    questsEl.appendChild(card);
+  }
 }
 
 function spellSummary(card) {
@@ -896,6 +933,11 @@ function drawLiveBattle(ctx, canvas, session) {
 function finishLiveBattle(winner) {
   const resultEl = document.getElementById('battle-result');
   player.recordBattleOutcome(winner);
+  player.recordDailyQuestProgress({
+    winner,
+    cardsPlayed: liveBattle.playerCardsPlayed,
+    spellsCast: liveBattle.playerSpellsCast,
+  });
   if (winner === 'player') {
     const xpGain = 40;
     const leveledUp = player.addXp(xpGain);

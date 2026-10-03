@@ -31,6 +31,19 @@ test('player troop cards use their owned upgrade levels in combat', () => {
   assert.equal(battle.units[0].card.damage, 24);
 });
 
+test('live battle counts player monster and spell plays for daily quests', () => {
+  const battle = new LiveBattle({
+    playerDeck: ['pfeil', ...deck.slice(0, 7)],
+    enemyDeck: [...deck].reverse(),
+  });
+  battle.playerEnergy = 10;
+  assert.equal(battle.playCard(1).ok, true);
+  battle.selectSpell(0);
+  assert.equal(battle.castSpellAt(12).ok, true);
+  assert.equal(battle.playerCardsPlayed, 2);
+  assert.equal(battle.playerSpellsCast, 1);
+});
+
 test('spell cards require a target and rotate only after a valid cast', () => {
   const spellDeck = ['pfeil', ...deck.slice(0, 7)];
   const battle = new LiveBattle({

@@ -10,6 +10,15 @@ const STARTER_GEMS = 50;
 const TROPHIES_PER_WIN = 30;
 const TROPHIES_PER_LOSS = 10;
 const CARD_UPGRADE_COST_PER_LEVEL = 50;
+export const DAILY_QUESTS = [
+  { id: 'win', label: 'Gewinne einen Arenakampf', target: 1, reward: 120 },
+  { id: 'play-cards', label: 'Spiele 5 Karten aus', target: 5, reward: 80 },
+  { id: 'cast-spells', label: 'Wirke 2 Zauber', target: 2, reward: 60 },
+];
+
+function utcDay(timestamp) {
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
 
 /**
  * Holds all persistent progression for a single player: level/XP, trophies
@@ -32,6 +41,69 @@ export class Player {
     this.fortressSlots = new Array(FORTRESS_SLOTS).fill(null);
     this.deck = this.collection.slice(0, DECK_SIZE);
     this.lastHuntAt = null;
+    this.dailyQuestProgress = {
+      day: utcDay(this.now()),
+      wins: 0,
+      cardsPlayed: 0,
+      spellsCast: 0,
+      claimed: [],
+    };
+  }
+
+  restoreDailyQuestProgress(progress) {
+    if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return;
+    const currentDay = utcDay(this.now());
+    if (progress.day !== currentDay) {
+      this.dailyQuestProgress = { day: currentDay, wins: 0, cardsPlayed: 0, spellsCast: 0, claimed: [] };
+      return;
+    }
+    const integerOrZero = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    const allowedClaims = new Set(DAILY_QUESTS.map((quest) => quest.id));
+    this.dailyQuestProgress = {
+      day: currentDay,
+      wins: Math.min(1, integerOrZero(progress.wins)),
+      cardsPlayed: Math.min(5, integerOrZero(progress.cardsPlayed)),
+      spellsCast: Math.min(2, integerOrZero(progress.spellsCast)),
+      claimed: Array.isArray(progress.claimed)
+        ? [...new Set(progress.claimed.filter((id) => allowedClaims.has(id)))]
+        : [],
+    };
+  }
+
+  getDailyQuests() {
+    const currentDay = utcDay(this.now());
+    if (this.dailyQuestProgress.day !== currentDay) {
+      this.dailyQuestProgress = { day: currentDay, wins: 0, cardsPlayed: 0, spellsCast: 0, claimed: [] };
+    }
+    const { wins, cardsPlayed, spellsCast, claimed } = this.dailyQuestProgress;
+    const progressById = { win: wins, 'play-cards': cardsPlayed, 'cast-spells': spellsCast };
+    return DAILY_QUESTS.map((quest) => ({
+      ...quest,
+      progress: Math.min(quest.target, progressById[quest.id]),
+      completed: progressById[quest.id] >= quest.target,
+      claimed: claimed.includes(quest.id),
+    }));
+  }
+
+  recordDailyQuestProgress({ winner, cardsPlayed = 0, spellsCast = 0 } = {}) {
+    this.getDailyQuests();
+    const validCount = (count) => Number.isSafeInteger(count) && count >= 0;
+    if (!validCount(cardsPlayed) || !validCount(spellsCast)) {
+      throw new Error('Quest progress counts must be non-negative integers');
+    }
+    this.dailyQuestProgress.wins = Math.min(1, this.dailyQuestProgress.wins + (winner === 'player' ? 1 : 0));
+    this.dailyQuestProgress.cardsPlayed = Math.min(5, this.dailyQuestProgress.cardsPlayed + cardsPlayed);
+    this.dailyQuestProgress.spellsCast = Math.min(2, this.dailyQuestProgress.spellsCast + spellsCast);
+  }
+
+  claimDailyQuest(questId) {
+    const quest = this.getDailyQuests().find((entry) => entry.id === questId);
+    if (!quest) throw new Error(`Unknown daily quest: ${questId}`);
+    if (quest.claimed) throw new Error('Daily quest reward already claimed');
+    if (!quest.completed) throw new Error('Daily quest is not complete yet');
+    this.dailyQuestProgress.claimed.push(questId);
+    this.coins += quest.reward;
+    return { questId, reward: quest.reward, coins: this.coins };
   }
 
   /** The upgrade level of an owned card (defaults to 1). */
