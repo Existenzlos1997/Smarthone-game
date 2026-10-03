@@ -25,3 +25,7 @@ export function getArenaProgress(trophies) {
   }
   return { current, next };
 }
+
+export function getArenaCardLevel(trophies) {
+  return ARENAS.indexOf(getArenaProgress(trophies).current) + 1;
+}

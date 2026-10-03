@@ -3,7 +3,7 @@ import { CARD_LIBRARY, SPELL_LIBRARY, getCardAtLevel, getCardById, RARITY } from
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
-import { getArenaProgress } from './src/arenas.js';
+import { getArenaCardLevel, getArenaProgress } from './src/arenas.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
 const TROOP_ADVANCE_END = 0.72;
@@ -791,12 +791,14 @@ function updateBattleEnergy(energy) {
 function runBattle(ctx, canvas) {
   if (!player.isDeckReady() || battleAnimationFrame !== null) return;
   const enemy = buildEnemyForce();
+  const enemyCardLevel = getArenaCardLevel(player.trophies);
   liveBattle = new LiveBattle({
     playerDeck: player.deck,
     enemyDeck: enemy.deck,
     playerDefenders: player.fortressSlots,
     enemyDefenders: enemy.defenders,
     playerCardLevels: player.cardLevels,
+    enemyCardLevels: Object.fromEntries(enemy.deck.map((cardId) => [cardId, enemyCardLevel])),
   });
   const startBtn = document.getElementById('btn-start-battle');
   startBtn.hidden = true;

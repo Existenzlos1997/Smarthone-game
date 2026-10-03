@@ -31,6 +31,23 @@ test('player troop cards use their owned upgrade levels in combat', () => {
   assert.equal(battle.units[0].card.damage, 24);
 });
 
+test('enemy defenders and deployed units use arena-scaled card levels', () => {
+  const battle = new LiveBattle({
+    playerDeck: deck,
+    enemyDeck: deck,
+    enemyDefenders: ['swordsman'],
+    enemyCardLevels: { swordsman: 3 },
+    rng: () => 0,
+  });
+  const defender = battle.units.find((unit) => unit.owner === 'enemy');
+  assert.equal(defender.card.hp, 144);
+  battle.enemyEnergy = MAX_ENERGY;
+  battle.step(1.5);
+  const deployed = battle.units.find((unit) => unit.owner === 'enemy' && !unit.stationary);
+  assert.equal(deployed.card.hp, 144);
+  assert.equal(deployed.card.damage, 24);
+});
+
 test('live battle counts player monster and spell plays for daily quests', () => {
   const battle = new LiveBattle({
     playerDeck: ['pfeil', ...deck.slice(0, 7)],

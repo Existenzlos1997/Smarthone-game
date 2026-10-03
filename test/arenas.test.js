@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getArenaProgress, ARENAS } from '../src/arenas.js';
+import { getArenaCardLevel, getArenaProgress, ARENAS } from '../src/arenas.js';
 
 test('a brand new player starts in the first arena', () => {
   const { current, next } = getArenaProgress(0);
@@ -24,4 +24,12 @@ test('the highest arena has no next arena', () => {
   const { current, next } = getArenaProgress(999999);
   assert.equal(current.name, ARENAS[ARENAS.length - 1].name);
   assert.equal(next, null);
+});
+
+test('opponent card levels follow arena thresholds and stop at the final arena', () => {
+  assert.equal(getArenaCardLevel(0), 1);
+  assert.equal(getArenaCardLevel(149), 1);
+  assert.equal(getArenaCardLevel(150), 2);
+  assert.equal(getArenaCardLevel(1300), ARENAS.length);
+  assert.equal(getArenaCardLevel(999999), ARENAS.length);
 });
