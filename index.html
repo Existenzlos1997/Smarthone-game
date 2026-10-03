@@ -149,22 +149,22 @@
     <div class="card-grid" id="fortress-collection"></div>
   </section>
 
-  <!-- ===================== DECK BAUEN (4 Karten für den Kampf) ===================== -->
+  <!-- ===================== DECK BAUEN (8 Karten für den Kampf) ===================== -->
   <section id="screen-deck" class="screen">
     <header class="subbar">
       <button class="btn btn-back" data-back>← Zurück</button>
-      <h2>Kampf-Deck (4 Karten)</h2>
+      <h2>Kampf-Deck (8 Karten)</h2>
     </header>
-    <p class="hint">Wähle genau 4 Karten. Sie laufen im Kampf automatisch von links nach rechts und kämpfen von selbst.</p>
+    <p class="hint">Wähle genau 8 Karten. Im Kampf spielst du jeweils 4 Karten aus; danach rotieren sie zurück in dein Deck.</p>
     <div class="slot-row" id="deck-slots"></div>
     <h3>Sammlung</h3>
     <div class="card-grid" id="deck-collection"></div>
   </section>
 
-  <!-- ===================== KAMPF (2D Lane Auto-Battle) ===================== -->
+  <!-- ===================== KAMPF (2D Echtzeit-Kartenkampf) ===================== -->
   <section id="screen-battle" class="screen">
     <header class="battle-topbar">
-      <button class="btn btn-back" data-back>← Zurück</button>
+      <button class="battle-leave" id="btn-battle-leave" aria-label="Zurück zur Festung">×</button>
       <div>
         <span class="battle-kicker">ARENA-KAMPF</span>
         <h2 id="battle-arena-name">Heimatdorf</h2>
@@ -184,15 +184,21 @@
       </div>
     </div>
     <section class="battle-deck-panel" aria-label="Kampfdeck">
-      <div class="battle-progress-copy"><span class="battle-kicker">SCHLACHTVERLAUF</span><span id="battle-progress-label">Bereit</span></div>
-      <div class="battle-progress-track" role="progressbar" aria-label="Kampfverlauf" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Bereit">
+      <div class="energy-readout"><span>ENERGIE</span><strong id="battle-energy-label">4 / 10</strong></div>
+      <div class="battle-progress-track energy-track" id="battle-energy-track" role="progressbar" aria-label="Energie" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4" aria-valuetext="4 von 10 Energie">
         <div class="battle-progress-fill" id="battle-progress-fill"></div>
       </div>
       <div class="battle-deck-heading">
-        <div><span class="battle-kicker">DEIN DECK</span><h3>Deine Truppen</h3></div>
-        <span class="deck-count" id="battle-deck-count" aria-live="polite"></span>
+        <div><span class="battle-kicker">DEINE HAND</span><h3>Truppe ausspielen</h3></div>
+        <span class="deck-count" id="battle-deck-count" aria-live="polite">Deck 8</span>
       </div>
-      <div class="battle-hand" id="battle-hand"></div>
+      <div class="battle-play-row">
+        <div class="battle-hand" id="battle-hand"></div>
+        <aside class="battle-next" aria-label="Nächste Karte">
+          <span>NÄCHSTE</span>
+          <div id="battle-next-card"></div>
+        </aside>
+      </div>
       <div class="battle-controls">
         <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
         <p id="battle-result" aria-live="polite"></p>

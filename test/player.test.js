@@ -6,7 +6,8 @@ test('starts at level 1 with starter cards', () => {
   const player = new Player();
   assert.equal(player.level, 1);
   assert.equal(player.xp, 0);
-  assert.deepEqual(player.collection, ['swordsman', 'archer']);
+  assert.equal(player.collection.length, 8);
+  assert.deepEqual(player.deck, player.collection);
 });
 
 test('addXp levels up once the threshold is reached', () => {
@@ -47,14 +48,14 @@ test('finding an already-owned card upgrades it instead of duplicating it', () =
   let now = Date.parse('2024-01-01T00:00:00Z');
   const player = new Player({ now: () => now });
   const first = player.completeDailyHunt(6, 6, () => 0);
-  assert.equal(first.leveledUp, false);
-  assert.equal(player.getCardLevel(first.card.id), 1);
+  assert.equal(first.leveledUp, true);
+  assert.equal(player.getCardLevel(first.card.id), 2);
 
   now += 24 * 60 * 60 * 1000;
   const second = player.completeDailyHunt(6, 6, () => 0); // same deterministic roll -> same card
   assert.equal(second.card.id, first.card.id);
   assert.equal(second.leveledUp, true);
-  assert.equal(player.getCardLevel(first.card.id), 2);
+  assert.equal(player.getCardLevel(first.card.id), 3);
   assert.equal(player.collection.filter((id) => id === first.card.id).length, 1);
 });
 
@@ -71,6 +72,7 @@ test('recordBattleOutcome adjusts trophies and never goes below zero', () => {
 
 test('equipping the fortress requires the card to be owned', () => {
   const player = new Player();
+  player.collection = player.collection.filter((cardId) => cardId !== 'dragon');
   assert.throws(() => player.equipFortressSlot(0, 'dragon'));
   player.collection.push('dragon');
   player.equipFortressSlot(0, 'dragon');
@@ -79,13 +81,12 @@ test('equipping the fortress requires the card to be owned', () => {
   assert.equal(player.fortressSlots[0], null);
 });
 
-test('setDeck requires exactly 4 unique owned cards', () => {
+test('setDeck requires exactly 8 unique owned cards', () => {
   const player = new Player();
-  player.collection.push('knight', 'mage');
-  assert.throws(() => player.setDeck(['swordsman', 'archer', 'knight'])); // too few
-  assert.throws(() => player.setDeck(['swordsman', 'swordsman', 'archer', 'knight'])); // duplicate
-  assert.throws(() => player.setDeck(['swordsman', 'archer', 'knight', 'dragon'])); // not owned
-  player.setDeck(['swordsman', 'archer', 'knight', 'mage']);
+  assert.throws(() => player.setDeck(player.collection.slice(0, 7)));
+  assert.throws(() => player.setDeck([...player.collection.slice(0, 7), 'swordsman']));
+  assert.throws(() => player.setDeck([...player.collection.slice(0, 7), 'unknown']));
+  player.setDeck([...player.collection].reverse());
   assert.equal(player.isDeckReady(), true);
-  assert.deepEqual(player.deck, ['swordsman', 'archer', 'knight', 'mage']);
+  assert.deepEqual(player.deck, [...player.collection].reverse());
 });

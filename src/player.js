@@ -1,7 +1,7 @@
 import { getCardById } from './cards.js';
 import { rollHuntReward } from './huntGame.js';
 
-const DECK_SIZE = 4;
+const DECK_SIZE = 8;
 const FORTRESS_SLOTS = 4;
 const XP_PER_LEVEL = 100;
 const DAILY_HUNT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -15,7 +15,7 @@ const TROPHIES_PER_LOSS = 10;
  * (which determine the current arena), gems/coins, the card collection
  * found via the daily hunt (each with its own upgrade level), the
  * defensive cards slotted into the fortress (only usable outside of
- * battle) and the 4-card battle deck used while fighting.
+ * battle) and the 8-card battle deck used while fighting.
  */
 export class Player {
   constructor({ name = 'Spieler', now = () => Date.now() } = {}) {
@@ -26,10 +26,10 @@ export class Player {
     this.coins = 0;
     this.gems = STARTER_GEMS;
     this.trophies = 0;
-    this.collection = ['swordsman', 'archer']; // starter cards
-    this.cardLevels = { swordsman: 1, archer: 1 };
+    this.collection = ['swordsman', 'archer', 'shieldbearer', 'knight', 'mage', 'catapult', 'griffin', 'dragon'];
+    this.cardLevels = Object.fromEntries(this.collection.map((cardId) => [cardId, 1]));
     this.fortressSlots = new Array(FORTRESS_SLOTS).fill(null);
-    this.deck = [];
+    this.deck = [...this.collection];
     this.lastHuntAt = null;
   }
 
@@ -116,7 +116,7 @@ export class Player {
     this.fortressSlots[slotIndex] = null;
   }
 
-  /** Sets the 4-card battle deck. Must be exactly 4 owned, unique cards. */
+  /** Sets the 8-card battle deck. Must be exactly 8 owned, unique cards. */
   setDeck(cardIds) {
     if (cardIds.length !== DECK_SIZE) {
       throw new Error(`Deck must contain exactly ${DECK_SIZE} cards`);

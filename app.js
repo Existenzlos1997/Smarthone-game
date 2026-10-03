@@ -1,11 +1,11 @@
 import { DECK_SIZE, Player } from './src/player.js';
 import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
-import { simulateBattle, LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
+import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
+import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 import { getArenaProgress } from './src/arenas.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
-const BATTLE_VISUAL_DURATION_MS = 3600;
 const TROOP_ADVANCE_END = 0.72;
 // The short clash pulse starts just before troops finish advancing.
 const CLASH_START = 0.68;
@@ -81,10 +81,17 @@ function loadPlayer() {
       player.coins = data.coins ?? 0;
       player.gems = data.gems ?? player.gems;
       player.trophies = data.trophies ?? 0;
-      player.collection = data.collection ?? player.collection;
+      player.collection = [...new Set([...player.collection, ...(data.collection ?? [])])];
       player.cardLevels = data.cardLevels ?? player.cardLevels;
       player.fortressSlots = data.fortressSlots ?? player.fortressSlots;
-      player.deck = data.deck ?? [];
+      if (
+        Array.isArray(data.deck)
+        && data.deck.length === DECK_SIZE
+        && new Set(data.deck).size === DECK_SIZE
+        && data.deck.every((id) => player.collection.includes(id))
+      ) {
+        player.deck = data.deck;
+      }
       player.lastHuntAt = data.lastHuntAt ?? null;
     } catch (err) {
       console.warn('Konnte Spielstand nicht laden, starte neu.', err);
@@ -115,6 +122,7 @@ const player = loadPlayer();
 const screens = document.querySelectorAll('.screen');
 const navButtons = document.querySelectorAll('.nav-btn');
 let battleAnimationFrame = null;
+let liveBattle = null;
 
 function showScreen(id) {
   if (id === 'screen-battle' && typeof screen.orientation?.lock === 'function') {
@@ -126,7 +134,8 @@ function showScreen(id) {
   if (id !== 'screen-battle' && battleAnimationFrame !== null) {
     cancelAnimationFrame(battleAnimationFrame);
     battleAnimationFrame = null;
-    document.getElementById('btn-start-battle').disabled = !player.isDeckReady();
+    liveBattle = null;
+    document.getElementById('btn-start-battle').hidden = false;
     document.getElementById('battle-result').textContent = 'Kampf abgebrochen — kein Ergebnis gewertet.';
   }
   if (id !== 'screen-hunt') cancelHuntSession();
@@ -450,7 +459,7 @@ function renderDeckScreen() {
 
   function redraw() {
     slotsEl.innerHTML = '';
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < DECK_SIZE; i += 1) {
       const cardId = pendingDeck[i];
       const slot = document.createElement('div');
       slot.className = `slot${cardId ? ' filled' : ''}`;
@@ -471,13 +480,13 @@ function renderDeckScreen() {
         onClick: () => {
           if (pendingDeck.includes(cardId)) {
             pendingDeck = pendingDeck.filter((id) => id !== cardId);
-          } else if (pendingDeck.length < 4) {
+          } else if (pendingDeck.length < DECK_SIZE) {
             pendingDeck.push(cardId);
           } else {
-            alert('Du kannst maximal 4 Karten wählen.');
+            alert(`Du kannst maximal ${DECK_SIZE} Karten wählen.`);
             return;
           }
-          if (pendingDeck.length === 4) {
+          if (pendingDeck.length === DECK_SIZE) {
             try {
               player.setDeck(pendingDeck);
               savePlayer();
@@ -495,142 +504,255 @@ function renderDeckScreen() {
 }
 
 // ---------------------------------------------------------------- battle screen
+let lastResult = null;
+let leaveBattleDeadline = 0;
+
 function buildEnemyForce() {
-  const pool = CARD_LIBRARY.filter((c) => c.rarity === RARITY.COMMON || c.rarity === RARITY.RARE);
-  const pick = () => pool[Math.floor(Math.random() * pool.length)].id;
-  return {
-    deck: [pick(), pick(), pick(), pick()],
-    defenders: [pick(), pick(), null, null],
-  };
+  const deck = CARD_LIBRARY.map((card) => card.id);
+  for (let index = deck.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [deck[index], deck[target]] = [deck[target], deck[index]];
+  }
+  return { deck, defenders: [deck[0], deck[1]] };
 }
 
-let lastResult = null;
 function renderBattleScreen() {
   const canvas = document.getElementById('battle-canvas');
   const ctx = canvas.getContext('2d');
   const { current } = getArenaProgress(player.trophies);
+  liveBattle = null;
   document.getElementById('battle-arena-name').textContent = current.name;
-  document.getElementById('battle-timer').textContent = 'Bereit';
+  document.getElementById('battle-timer').textContent = '3:00';
   document.getElementById('player-fortress-health').textContent = '100%';
   document.getElementById('enemy-fortress-health').textContent = '100%';
-  document.getElementById('battle-progress-fill').style.width = '0%';
-  document.querySelector('.battle-progress-track').setAttribute('aria-valuenow', '0');
-  document.querySelector('.battle-progress-track').setAttribute('aria-valuetext', 'Bereit');
-  document.getElementById('battle-progress-label').textContent = 'Bereit';
-  renderBattleHand();
-  drawBattleScene(ctx, canvas, 0, null, player.deck, [], undefined, player.fortressSlots, []);
   document.getElementById('battle-result').textContent = '';
+  document.getElementById('btn-battle-leave').textContent = '×';
+  document.getElementById('btn-battle-leave').setAttribute('aria-label', 'Zurück zur Festung');
+  leaveBattleDeadline = 0;
+  setEnergyDisplay(4);
+  renderBattleHand(null);
+  drawBattleScene(ctx, canvas, 0, null, [], [], undefined, player.fortressSlots, []);
   const startBtn = document.getElementById('btn-start-battle');
+  startBtn.hidden = false;
   startBtn.disabled = !player.isDeckReady();
-  startBtn.textContent = player.isDeckReady() ? 'Kampf beginnen' : 'Erst ein Deck aus 4 Karten bauen';
+  startBtn.textContent = player.isDeckReady() ? 'Kampf beginnen' : 'Erst ein Deck aus 8 Karten bauen';
   startBtn.onclick = () => runBattle(ctx, canvas);
 }
 
-function renderBattleHand() {
+function renderBattleHand(session) {
   const hand = document.getElementById('battle-hand');
+  const queue = session?.playerQueue ?? player.deck;
   hand.replaceChildren();
-  document.getElementById('battle-deck-count').textContent = `${player.deck.length} / ${DECK_SIZE}`;
-  for (let index = 0; index < DECK_SIZE; index += 1) {
-    const cardId = player.deck[index];
-    const element = document.createElement('div');
-    if (!cardId) {
-      element.className = 'battle-card-empty';
-      element.textContent = `Karte ${index + 1}`;
-      hand.appendChild(element);
-      continue;
-    }
+  document.getElementById('battle-deck-count').textContent = `Deck ${queue.length}`;
+  queue.slice(0, 4).forEach((cardId, index) => {
     const card = getCardById(cardId);
-    element.className = `battle-card rarity-${card.rarity}`;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `battle-card rarity-${card.rarity}`;
+    button.dataset.handIndex = String(index);
+    button.setAttribute('aria-label', `${card.name}, kostet ${card.cost} Energie`);
+    const cost = document.createElement('span');
+    cost.className = 'battle-card-cost';
+    cost.textContent = String(card.cost);
     const icon = document.createElement('span');
     icon.className = 'battle-card-icon';
     icon.appendChild(createMonsterArtwork(cardId, 'battle-card-image'));
     const name = document.createElement('span');
     name.className = 'battle-card-name';
     name.textContent = card.name;
-    element.append(icon, name);
-    hand.appendChild(element);
-  }
+    button.append(cost, icon, name);
+    button.disabled = !session || session.playerEnergy < card.cost;
+    button.addEventListener('click', () => {
+      const result = liveBattle?.playCard(index);
+      if (!result?.ok) return;
+      document.getElementById('battle-result').textContent = `${card.name} rückt aus!`;
+      renderBattleHand(liveBattle);
+      updateBattleEnergy(liveBattle.playerEnergy);
+    });
+    hand.appendChild(button);
+  });
+
+  const next = document.getElementById('battle-next-card');
+  next.replaceChildren();
+  const nextCardId = session?.playerNextCard ?? player.deck[4];
+  if (!nextCardId) return;
+  const card = getCardById(nextCardId);
+  const icon = createMonsterArtwork(nextCardId, 'next-card-image');
+  const cost = document.createElement('strong');
+  cost.textContent = String(card.cost);
+  next.append(icon, cost);
+}
+
+function setEnergyDisplay(energy) {
+  const value = Math.max(0, Math.min(MAX_ENERGY, energy));
+  const rounded = Math.floor(value * 10) / 10;
+  document.getElementById('battle-progress-fill').style.width = `${value / MAX_ENERGY * 100}%`;
+  document.getElementById('battle-energy-track').setAttribute('aria-valuenow', String(Math.floor(value)));
+  document.getElementById('battle-energy-track').setAttribute('aria-valuetext', `${rounded} von ${MAX_ENERGY} Energie`);
+  document.getElementById('battle-energy-label').textContent = `${rounded} / ${MAX_ENERGY}`;
+}
+
+function updateBattleEnergy(energy) {
+  setEnergyDisplay(energy);
+  document.querySelectorAll('#battle-hand .battle-card').forEach((button) => {
+    const card = getCardById(liveBattle.playerQueue[Number(button.dataset.handIndex)]);
+    button.disabled = energy < card.cost || Boolean(liveBattle.winner);
+  });
 }
 
 function runBattle(ctx, canvas) {
-  if (!player.isDeckReady()) return;
+  if (!player.isDeckReady() || battleAnimationFrame !== null) return;
   const enemy = buildEnemyForce();
-  lastResult = simulateBattle({
+  liveBattle = new LiveBattle({
     playerDeck: player.deck,
     enemyDeck: enemy.deck,
-    playerFortressDefenders: player.fortressSlots,
-    enemyFortressDefenders: enemy.defenders,
+    playerDefenders: player.fortressSlots,
+    enemyDefenders: enemy.defenders,
   });
   const startBtn = document.getElementById('btn-start-battle');
-  startBtn.disabled = true;
-  document.getElementById('battle-result').textContent = 'Die Truppen rücken vor …';
+  startBtn.hidden = true;
+  document.getElementById('battle-result').textContent = 'Tippe eine Karte, um deine Truppen auszusenden.';
+  document.getElementById('btn-battle-leave').textContent = '×';
+  leaveBattleDeadline = 0;
+  document.getElementById('btn-battle-leave').setAttribute('aria-label', 'Zweimal tippen zum Aufgeben');
+  renderBattleHand(liveBattle);
+  let previousFrame = performance.now();
 
-  animateResult(ctx, canvas, lastResult, player.deck, enemy.deck, player.fortressSlots, enemy.defenders, () => {
-    const resultEl = document.getElementById('battle-result');
-    player.recordBattleOutcome(lastResult.winner);
-    if (lastResult.winner === 'player') {
-      const xpGain = 40;
-      const leveledUp = player.addXp(xpGain);
-      player.coins += 20;
-      resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +20 Münzen${leveledUp ? ' — Level Up!' : ''}`;
-    } else if (lastResult.winner === 'enemy') {
-      resultEl.textContent = 'Niederlage. -10 🏆. Verbessere dein Deck und versuche es erneut.';
-    } else {
-      resultEl.textContent = 'Unentschieden.';
-    }
-    savePlayer();
-    startBtn.disabled = false;
-    startBtn.textContent = 'Noch einmal kämpfen';
-    renderMenu();
-  });
-}
-
-function animateResult(ctx, canvas, result, playerDeck, enemyDeck, playerDefenders, enemyDefenders, onDone) {
-  const durationMs = BATTLE_VISUAL_DURATION_MS;
-  const start = performance.now();
-  const battleDuration = result.durationSeconds;
-  const playerHealth = document.getElementById('player-fortress-health');
-  const enemyHealth = document.getElementById('enemy-fortress-health');
-  const timer = document.getElementById('battle-timer');
-  let previousPlayerHp;
-  let previousEnemyHp;
-  let previousTimer;
-  let previousProgress;
-  const progressFill = document.getElementById('battle-progress-fill');
-  const progressTrack = document.querySelector('.battle-progress-track');
-  const progressLabel = document.getElementById('battle-progress-label');
   function frame(now) {
-    const progress = Math.min(1, (now - start) / durationMs);
-    const fortressHealth = interpolateFortressHealth(result, progress);
-    drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth, playerDefenders, enemyDefenders);
-    const playerHp = Math.round(fortressHealth.player / FORTRESS_HP * 100);
-    const enemyHp = Math.round(fortressHealth.enemy / FORTRESS_HP * 100);
-    const timerText = `${Math.ceil((1 - progress) * battleDuration)}s`;
-    if (playerHp !== previousPlayerHp) playerHealth.textContent = `${playerHp}%`;
-    if (enemyHp !== previousEnemyHp) enemyHealth.textContent = `${enemyHp}%`;
-    if (timerText !== previousTimer) timer.textContent = timerText;
-    const progressValue = Math.round(progress * 100);
-    if (progressValue !== previousProgress) {
-      progressFill.style.width = `${progressValue}%`;
-      progressTrack.setAttribute('aria-valuenow', progressValue);
-      progressTrack.setAttribute('aria-valuetext', `${progressValue}%`);
-      progressLabel.textContent = `${progressValue}%`;
-    }
-    previousPlayerHp = playerHp;
-    previousEnemyHp = enemyHp;
-    previousTimer = timerText;
-    previousProgress = progressValue;
-
-    if (progress < 1) {
-      battleAnimationFrame = requestAnimationFrame(frame);
-    } else {
+    if (!liveBattle || document.getElementById('screen-battle').classList.contains('active') === false) {
       battleAnimationFrame = null;
-      progressLabel.textContent = 'Abgeschlossen';
-      onDone();
+      return;
     }
+    const delta = Math.min(0.1, Math.max(0, (now - previousFrame) / 1000));
+    previousFrame = now;
+    liveBattle.step(delta);
+    drawLiveBattle(ctx, canvas, liveBattle);
+    updateBattleEnergy(liveBattle.playerEnergy);
+    document.getElementById('player-fortress-health').textContent = `${Math.ceil(liveBattle.playerFortressHp / FORTRESS_HP * 100)}%`;
+    document.getElementById('enemy-fortress-health').textContent = `${Math.ceil(liveBattle.enemyFortressHp / FORTRESS_HP * 100)}%`;
+    const remaining = Math.max(0, BATTLE_DURATION_SECONDS - liveBattle.elapsed);
+    document.getElementById('battle-timer').textContent = `${Math.floor(remaining / 60)}:${String(Math.ceil(remaining % 60)).padStart(2, '0')}`;
+    if (liveBattle.winner) {
+      battleAnimationFrame = null;
+      finishLiveBattle(liveBattle.winner);
+      return;
+    }
+    battleAnimationFrame = requestAnimationFrame(frame);
   }
   battleAnimationFrame = requestAnimationFrame(frame);
 }
+
+function drawLiveBattle(ctx, canvas, session) {
+  const fortressHealth = { player: session.playerFortressHp, enemy: session.enemyFortressHp };
+  const defenders = (owner) => session.units
+    .filter((unit) => unit.owner === owner && unit.stationary)
+    .map((unit) => unit.cardId);
+  drawBattleScene(ctx, canvas, 0, null, [], [], fortressHealth, defenders('player'), defenders('enemy'));
+  const width = canvas.width;
+  const height = canvas.height;
+  const groundY = height * ARENA_LAYOUT.groundHeight;
+  for (const unit of session.units) {
+    if (unit.stationary) continue;
+    const x = unit.x / LANE_LENGTH * width;
+    const y = groundY;
+    const sprite = getMonsterSprite(unit.cardId);
+    const color = unit.owner === 'player' ? '#3fe0c8' : '#ff5d73';
+    ctx.save();
+    ctx.fillStyle = `${color}88`;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 2, 31, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = '#080a1c';
+    ctx.shadowBlur = 8;
+    const bob = Math.abs(Math.sin(performance.now() / 95 + unit.x * 1.7)) * 3.2;
+    const attackPulse = unit.attackCooldown > 0.88 ? (1 - unit.attackCooldown) / 0.12 : 0;
+    if (sprite.complete && sprite.naturalWidth) {
+      ctx.save();
+      if (unit.owner === 'enemy') {
+        ctx.translate(x * 2, y);
+        ctx.scale(-1, 1);
+        ctx.translate(0, -y);
+      }
+      ctx.globalAlpha = unit.hitFlash > 0 ? 0.65 : 1;
+      ctx.drawImage(sprite, x - 42 + (unit.owner === 'player' ? attackPulse * 5 : -attackPulse * 5), y - 91 - bob, 84, 84);
+      if (unit.hitFlash > 0) {
+        ctx.fillStyle = '#fff5cf';
+        for (let spark = 0; spark < 3; spark += 1) {
+          const angle = performance.now() / 70 + spark * Math.PI * 2 / 3;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(angle) * 37, y - 56 - bob + Math.sin(angle) * 22, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (attackPulse > 0) {
+        ctx.globalAlpha = attackPulse;
+        ctx.strokeStyle = '#fff1b0';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x + (unit.owner === 'player' ? 34 : -34), y - 45 - bob, 15, unit.owner === 'player' ? -1.2 : Math.PI - 1.2, unit.owner === 'player' ? 0.8 : Math.PI + 0.8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#17152c';
+    ctx.beginPath();
+    roundedRectPath(ctx, x - 26, y - 99, 52, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = unit.owner === 'player' ? '#3fe0c8' : '#ff5d73';
+    ctx.beginPath();
+    roundedRectPath(ctx, x - 25, y - 98, 50 * Math.max(0, unit.hp / unit.card.hp), 6, 3);
+    ctx.fill();
+    ctx.restore();
+  }
+  for (const effect of session.effects) {
+    ctx.save();
+    ctx.globalAlpha = 1 - effect.age / 0.65;
+    ctx.fillStyle = effect.owner === 'player' ? '#fff2bc' : '#ffe1e8';
+    ctx.font = '900 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(effect.kind === 'death' ? '✦' : `-${effect.amount}`, effect.x / LANE_LENGTH * width, groundY - 103 - effect.age * 34);
+    ctx.restore();
+  }
+}
+
+function finishLiveBattle(winner) {
+  const resultEl = document.getElementById('battle-result');
+  player.recordBattleOutcome(winner);
+  if (winner === 'player') {
+    const xpGain = 40;
+    const leveledUp = player.addXp(xpGain);
+    player.coins += 20;
+    resultEl.textContent = `Sieg! +30 🏆, +${xpGain} XP, +20 Münzen${leveledUp ? ' — Level Up!' : ''}`;
+  } else if (winner === 'enemy') {
+    resultEl.textContent = 'Niederlage. -10 🏆. Verbessere dein Deck und versuche es erneut.';
+  } else {
+    resultEl.textContent = 'Unentschieden.';
+  }
+  savePlayer();
+  const startBtn = document.getElementById('btn-start-battle');
+  startBtn.hidden = false;
+  startBtn.textContent = 'Noch einmal kämpfen';
+  startBtn.onclick = () => runBattle(document.getElementById('battle-canvas').getContext('2d'), document.getElementById('battle-canvas'));
+  document.getElementById('btn-battle-leave').setAttribute('aria-label', 'Zurück zur Festung');
+  renderMenu();
+}
+
+document.getElementById('btn-battle-leave').addEventListener('click', () => {
+  if (!liveBattle || liveBattle.winner) {
+    showScreen('screen-menu');
+    return;
+  }
+  const now = performance.now();
+  if (now > leaveBattleDeadline) {
+    leaveBattleDeadline = now + 2200;
+    document.getElementById('btn-battle-leave').textContent = '!';
+    document.getElementById('battle-result').textContent = 'Zum Aufgeben erneut auf × tippen.';
+    return;
+  }
+  leaveBattleDeadline = 0;
+  liveBattle.winner = 'enemy';
+});
 
 function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = interpolateFortressHealth(result, progress), playerDefenders = [], enemyDefenders = []) {
   ctx.save();

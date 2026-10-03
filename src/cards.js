@@ -10,14 +10,14 @@ export const RARITY = {
 // Base stats are balanced around lane combat: hp/damage per hit and
 // speed expressed in lane-tiles per second.
 export const CARD_LIBRARY = [
-  { id: 'swordsman', name: 'Schwertkämpfer', rarity: RARITY.COMMON, hp: 120, damage: 20, speed: 1.0, range: 1 },
-  { id: 'archer', name: 'Bogenschütze', rarity: RARITY.COMMON, hp: 70, damage: 15, speed: 1.1, range: 4 },
-  { id: 'shieldbearer', name: 'Schildträger', rarity: RARITY.COMMON, hp: 220, damage: 10, speed: 0.7, range: 1 },
-  { id: 'knight', name: 'Ritter', rarity: RARITY.RARE, hp: 180, damage: 30, speed: 1.2, range: 1 },
-  { id: 'mage', name: 'Magier', rarity: RARITY.RARE, hp: 60, damage: 35, speed: 0.9, range: 5 },
-  { id: 'catapult', name: 'Katapult', rarity: RARITY.EPIC, hp: 150, damage: 60, speed: 0.5, range: 6 },
-  { id: 'griffin', name: 'Greif', rarity: RARITY.EPIC, hp: 140, damage: 40, speed: 1.6, range: 1 },
-  { id: 'dragon', name: 'Drache', rarity: RARITY.LEGENDARY, hp: 260, damage: 55, speed: 1.3, range: 3 },
+  { id: 'swordsman', name: 'Schwertkämpfer', rarity: RARITY.COMMON, cost: 3, hp: 120, damage: 20, speed: 1.0, range: 1 },
+  { id: 'archer', name: 'Bogenschütze', rarity: RARITY.COMMON, cost: 3, hp: 70, damage: 15, speed: 1.1, range: 4 },
+  { id: 'shieldbearer', name: 'Schildträger', rarity: RARITY.COMMON, cost: 4, hp: 220, damage: 10, speed: 0.7, range: 1 },
+  { id: 'knight', name: 'Ritter', rarity: RARITY.RARE, cost: 4, hp: 180, damage: 30, speed: 1.2, range: 1 },
+  { id: 'mage', name: 'Magier', rarity: RARITY.RARE, cost: 4, hp: 60, damage: 35, speed: 0.9, range: 5 },
+  { id: 'catapult', name: 'Katapult', rarity: RARITY.EPIC, cost: 5, hp: 150, damage: 60, speed: 0.5, range: 6 },
+  { id: 'griffin', name: 'Greif', rarity: RARITY.EPIC, cost: 5, hp: 140, damage: 40, speed: 1.6, range: 1 },
+  { id: 'dragon', name: 'Drache', rarity: RARITY.LEGENDARY, cost: 5, hp: 260, damage: 55, speed: 1.3, range: 3 },
 ];
 
 export function getCardById(id) {
@@ -65,4 +65,3 @@ export function pickWeightedCard(weights = RARITY_WEIGHTS, rng = Math.random) {
 export function rollRandomCard(rng = Math.random) {
   return pickWeightedCard(RARITY_WEIGHTS, rng);
 }
-
