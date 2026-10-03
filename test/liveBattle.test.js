@@ -59,6 +59,8 @@ test('live battle counts player monster and spell plays for daily quests', () =>
   assert.equal(battle.castSpellAt(12).ok, true);
   assert.equal(battle.playerCardsPlayed, 2);
   assert.equal(battle.playerSpellsCast, 1);
+  assert.deepEqual(battle.playerCardsPlayedIds, ['swordsman', 'pfeil']);
+  assert.deepEqual(battle.playerSpellsCastIds, ['pfeil']);
 });
 
 test('spell cards require a target and rotate only after a valid cast', () => {
@@ -89,6 +91,7 @@ test('retapping a selected spell cancels it without spending energy', () => {
   assert.equal(battle.selectSpell(0).cancelled, true);
   assert.equal(battle.selectedSpellIndex, null);
   assert.equal(battle.playerEnergy, 4);
+  assert.deepEqual(battle.playerSpellsCastIds, []);
 });
 
 test('healing, frost and rage apply effects only to the correct side', () => {
