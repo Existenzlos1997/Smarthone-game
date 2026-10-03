@@ -80,7 +80,7 @@ export class Player {
   setName(name) {
     if (typeof name !== 'string') throw new Error('Player name must be text');
     const normalizedName = name.trim();
-    if (!normalizedName || /[\u0000-\u001f\u007f]/u.test(normalizedName)) {
+    if (!normalizedName || /\p{Cc}/u.test(normalizedName)) {
       throw new Error('Player name must contain visible text only');
     }
     if ([...normalizedName].length > MAX_PLAYER_NAME_LENGTH) {

@@ -212,6 +212,7 @@ document.getElementById('btn-share').addEventListener('click', onShare);
 const playerNameDialog = document.getElementById('player-name-dialog');
 const playerNameInput = document.getElementById('player-name-input');
 document.getElementById('btn-edit-player-name').addEventListener('click', () => {
+  playerNameInput.setCustomValidity('');
   playerNameInput.value = player.name;
   playerNameDialog.showModal();
   playerNameInput.focus();

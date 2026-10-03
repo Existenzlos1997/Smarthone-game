@@ -19,6 +19,7 @@ test('player names are trimmed, bounded and reject empty or control-character va
   assert.equal(player.name, 'Éowyn 🧙');
   assert.throws(() => player.setName('   '), /visible text/);
   assert.throws(() => player.setName('Name\nBetrüger'), /visible text/);
+  assert.throws(() => player.setName('Name\u0085'), /visible text/);
   assert.throws(() => player.setName('a'.repeat(21)), /at most 20/);
   assert.throws(() => player.setName(null), /must be text/);
 });
