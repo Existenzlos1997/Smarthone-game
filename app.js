@@ -26,6 +26,16 @@ const ARENA_LAYOUT = {
 };
 const FORTRESS_TOWER_WIDTH = 94;
 const FORTRESS_TOWER_HEIGHT = 150;
+const CREATURE_PALETTE = {
+  swordsman: { body: '#d4a66c', belly: '#f2d9a5', accent: '#6c90d9' },
+  archer: { body: '#75a94f', belly: '#c4d78a', accent: '#d1ac58' },
+  shieldbearer: { body: '#658f91', belly: '#b5cebd', accent: '#d2aa58' },
+  knight: { body: '#a59ac0', belly: '#ded2ed', accent: '#e0bd65' },
+  mage: { body: '#9270bd', belly: '#d4b4e4', accent: '#73d6cb' },
+  catapult: { body: '#bc754e', belly: '#e4b88b', accent: '#664a37' },
+  griffin: { body: '#c48a55', belly: '#f1d99a', accent: '#e8c65f' },
+  dragon: { body: '#398e76', belly: '#93d2a2', accent: '#e9a953' },
+};
 const RARITY_ICON = {
   [RARITY.COMMON]: '💀',
   [RARITY.RARE]: '🌀',
@@ -492,6 +502,10 @@ function renderBattleScreen() {
   document.getElementById('battle-timer').textContent = 'Bereit';
   document.getElementById('player-fortress-health').textContent = '100%';
   document.getElementById('enemy-fortress-health').textContent = '100%';
+  document.getElementById('battle-progress-fill').style.width = '0%';
+  document.querySelector('.battle-progress-track').setAttribute('aria-valuenow', '0');
+  document.querySelector('.battle-progress-track').setAttribute('aria-valuetext', 'Bereit');
+  document.getElementById('battle-progress-label').textContent = 'Bereit';
   renderBattleHand();
   drawBattleScene(ctx, canvas, 0, null, player.deck, []);
   document.getElementById('battle-result').textContent = '';
@@ -571,6 +585,10 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   let previousPlayerHp;
   let previousEnemyHp;
   let previousTimer;
+  let previousProgress;
+  const progressFill = document.getElementById('battle-progress-fill');
+  const progressTrack = document.querySelector('.battle-progress-track');
+  const progressLabel = document.getElementById('battle-progress-label');
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
     const fortressHealth = interpolateFortressHealth(result, progress);
@@ -581,14 +599,23 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
     if (playerHp !== previousPlayerHp) playerHealth.textContent = `${playerHp}%`;
     if (enemyHp !== previousEnemyHp) enemyHealth.textContent = `${enemyHp}%`;
     if (timerText !== previousTimer) timer.textContent = timerText;
+    const progressValue = Math.round(progress * 100);
+    if (progressValue !== previousProgress) {
+      progressFill.style.width = `${progressValue}%`;
+      progressTrack.setAttribute('aria-valuenow', progressValue);
+      progressTrack.setAttribute('aria-valuetext', `${progressValue}%`);
+      progressLabel.textContent = `${progressValue}%`;
+    }
     previousPlayerHp = playerHp;
     previousEnemyHp = enemyHp;
     previousTimer = timerText;
+    previousProgress = progressValue;
 
     if (progress < 1) {
       battleAnimationFrame = requestAnimationFrame(frame);
     } else {
       battleAnimationFrame = null;
+      progressLabel.textContent = 'Abgeschlossen';
       onDone();
     }
   }
@@ -601,8 +628,8 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, f
   const groundY = height * ARENA_LAYOUT.groundHeight;
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
   sky.addColorStop(0, '#35205f');
-  sky.addColorStop(0.58, '#9a4f91');
-  sky.addColorStop(1, '#f08c91');
+  sky.addColorStop(0.58, '#87518c');
+  sky.addColorStop(1, '#d98b9b');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, height);
 
@@ -618,25 +645,32 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, f
   }
   ctx.globalAlpha = 1;
   ctx.shadowColor = '#fff1bd';
-  ctx.shadowBlur = 30;
+  ctx.shadowBlur = 22;
   ctx.fillStyle = '#fff0c4';
   ctx.beginPath();
-  ctx.arc(width * 0.78, height * 0.17, height * 0.07, 0, Math.PI * 2);
+  ctx.arc(width * 0.82, height * 0.16, height * 0.065, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#d8b6de55';
+  ctx.beginPath();
+  ctx.ellipse(width * 0.62, height * 0.19, width * 0.075, height * 0.035, -0.03, 0, Math.PI * 2);
+  ctx.ellipse(width * 0.36, height * 0.1, width * 0.055, height * 0.025, 0.02, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
   drawHill(ctx, width, groundY, 0.53, '#55336f', 0);
   drawHill(ctx, width, groundY, 0.62, '#372755', 1);
-  ctx.fillStyle = '#173c48';
+  ctx.fillStyle = '#183b43';
   ctx.fillRect(0, groundY, width, height - groundY);
   const grass = ctx.createLinearGradient(0, groundY, 0, height);
-  grass.addColorStop(0, '#315e52');
-  grass.addColorStop(1, '#14293a');
+  grass.addColorStop(0, '#365f53');
+  grass.addColorStop(1, '#172a38');
   ctx.fillStyle = grass;
   ctx.fillRect(0, groundY + 5, width, height - groundY);
   ctx.fillStyle = '#95bf87';
   ctx.fillRect(0, groundY, width, 5);
 
+  drawBattleTrees(ctx, width, groundY, height);
   ctx.fillStyle = '#c3ab75';
   ctx.globalAlpha = 0.75;
   ctx.fillRect(width * 0.42, groundY - 7, width * 0.16, 18);
@@ -688,6 +722,32 @@ function drawHill(ctx, width, groundY, heightRatio, color, offset) {
   ctx.lineTo(width, groundY);
   ctx.closePath();
   ctx.fill();
+}
+
+function drawBattleTrees(ctx, width, groundY, height) {
+  ctx.save();
+  for (let index = 0; index < 8; index += 1) {
+    const x = width * (0.1 + index * 0.115);
+    if (x > width * 0.39 && x < width * 0.61) continue;
+    const treeHeight = height * (0.17 + (index % 3) * 0.035);
+    const baseY = groundY + 2;
+    ctx.globalAlpha = 0.68;
+    ctx.fillStyle = '#1c4c4c';
+    ctx.beginPath();
+    ctx.moveTo(x, baseY - treeHeight);
+    ctx.lineTo(x - treeHeight * 0.27, baseY);
+    ctx.lineTo(x + treeHeight * 0.27, baseY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#28645b';
+    ctx.beginPath();
+    ctx.moveTo(x, baseY - treeHeight * 0.78);
+    ctx.lineTo(x - treeHeight * 0.19, baseY - treeHeight * 0.08);
+    ctx.lineTo(x + treeHeight * 0.19, baseY - treeHeight * 0.08);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 function drawFortress(ctx, x, y, color, hp) {
@@ -758,12 +818,12 @@ function roundedRectPath(ctx, x, y, width, height, radius) {
 
 function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
   ctx.save();
-  const icons = (Array.isArray(deck) ? deck : []).map((cardId) => CARD_ART[cardId] ?? '⚔️');
-  if (icons.length === 0) {
+  const cardIds = Array.isArray(deck) ? deck : [];
+  if (cardIds.length === 0) {
     ctx.restore();
     return;
   }
-  icons.forEach((icon, index) => {
+  cardIds.forEach((cardId, index) => {
     const startX = isPlayer
       ? width * ARENA_LAYOUT.playerTroopStart + index * width * ARENA_LAYOUT.troopStartSpacing
       : width * ARENA_LAYOUT.enemyTroopStart - index * width * ARENA_LAYOUT.troopStartSpacing;
@@ -772,20 +832,78 @@ function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
       : width * ARENA_LAYOUT.enemyTroopEnd + index * width * ARENA_LAYOUT.troopEndSpacing;
     const x = startX + (endX - startX) * progress;
     const y = groundY - ARENA_LAYOUT.troopHeight - (index % 2) * ARENA_LAYOUT.troopStagger;
-    ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 5, 24, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.font = '34px "Segoe UI Emoji", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#17102c';
-    ctx.shadowBlur = 6;
-    ctx.fillText(icon, x, y - 13);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = isPlayer ? '#5de1b8' : '#ff7080';
-    ctx.fillRect(x - 17, y - 39, 34, 4);
+    const palette = CREATURE_PALETTE[cardId] ?? CREATURE_PALETTE.swordsman;
+    drawBattleCreature(ctx, x, y, palette, isPlayer, index);
   });
+  ctx.restore();
+}
+
+function drawBattleCreature(ctx, x, y, palette, isPlayer, index) {
+  const direction = isPlayer ? 1 : -1;
+  const size = 1 + (index % 2) * 0.06;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(direction * size, size);
+  ctx.shadowColor = '#11132599';
+  ctx.shadowBlur = 7;
+  ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
+  ctx.beginPath();
+  ctx.ellipse(0, 3, 25, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = palette.body;
+  ctx.beginPath();
+  ctx.ellipse(0, -13, 16, 19, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = palette.belly;
+  ctx.beginPath();
+  ctx.ellipse(2, -10, 9, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = palette.body;
+  ctx.beginPath();
+  ctx.arc(0, -32, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-10, -41);
+  ctx.lineTo(-15, -52);
+  ctx.lineTo(-2, -43);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(8, -42);
+  ctx.lineTo(16, -51);
+  ctx.lineTo(13, -37);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#fff7dc';
+  ctx.beginPath();
+  ctx.ellipse(-5, -33, 4, 5, -0.12, 0, Math.PI * 2);
+  ctx.ellipse(5, -33, 4, 5, 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#27263b';
+  ctx.beginPath();
+  ctx.arc(-4, -32, 1.8, 0, Math.PI * 2);
+  ctx.arc(6, -32, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#392941';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(1, -24, 4, 0.12, Math.PI - 0.12);
+  ctx.stroke();
+  ctx.fillStyle = palette.accent;
+  ctx.beginPath();
+  ctx.ellipse(-15, -13, 5, 9, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(15, -13, 5, 9, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = isPlayer ? '#56d5b4' : '#ff7182';
+  ctx.beginPath();
+  roundedRectPath(ctx, -18, -57, 36, 5, 3);
+  ctx.fill();
   ctx.restore();
 }
 

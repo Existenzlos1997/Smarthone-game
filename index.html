@@ -184,16 +184,20 @@
       </div>
     </div>
     <section class="battle-deck-panel" aria-label="Kampfdeck">
+      <div class="battle-progress-copy"><span class="battle-kicker">SCHLACHTVERLAUF</span><span id="battle-progress-label">Bereit</span></div>
+      <div class="battle-progress-track" role="progressbar" aria-label="Kampfverlauf" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Bereit">
+        <div class="battle-progress-fill" id="battle-progress-fill"></div>
+      </div>
       <div class="battle-deck-heading">
-        <div><span class="battle-kicker">DEIN DECK</span><h3>Truppen im Einsatz</h3></div>
+        <div><span class="battle-kicker">DEIN DECK</span><h3>Deine Truppen</h3></div>
         <span class="deck-count" id="battle-deck-count" aria-live="polite"></span>
       </div>
       <div class="battle-hand" id="battle-hand"></div>
+      <div class="battle-controls">
+        <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
+        <p id="battle-result" aria-live="polite"></p>
+      </div>
     </section>
-    <div class="battle-controls">
-      <button id="btn-start-battle" class="btn btn-primary">Kampf beginnen</button>
-      <p id="battle-result" aria-live="polite"></p>
-    </div>
   </section>
 
   <!-- ===================== UNTERE NAVIGATIONSLEISTE ===================== -->

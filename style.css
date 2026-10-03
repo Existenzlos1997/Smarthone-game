@@ -250,24 +250,28 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 .battle-timer { min-width: 58px; justify-self: end; padding: 7px 10px; border: 1px solid #ffffff32; border-radius: 999px; background: #12132bd9; color: var(--white); font-size: .78rem; font-weight: 800; text-align: center; }
 .battle-arena-frame { position: relative; }
 .battle-scoreboard { position: absolute; top: 0; right: 2px; left: 2px; z-index: 1; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
-.fortress-health { width: min(39%, 220px); display: grid; gap: 4px; padding: 7px 10px; border: 1px solid var(--border-light); border-radius: 0 0 10px 10px; background: #101427d9; font-size: .66rem; font-weight: 800; text-shadow: 0 1px 2px #000; }
+.fortress-health { width: min(30%, 220px); display: grid; gap: 4px; padding: 7px 10px; border: 1px solid var(--border-light); border-radius: 0 0 10px 10px; background: #101427d9; font-size: .66rem; font-weight: 800; text-shadow: 0 1px 2px #000; }
 .fortress-health strong { color: #d8ffe7; font-size: .76rem; }
 .enemy-health { text-align: right; }
 .enemy-health strong { color: #ffd9de; }
 #battle-canvas { width: 100%; height: auto; aspect-ratio: 2 / 1; display: block; border: 1px solid #ffffff40; border-radius: 16px; background: #271c56; box-shadow: 0 16px 34px #07091d80, inset 0 0 0 2px #ffffff12; touch-action: manipulation; }
 .battle-deck-panel { margin-top: 12px; padding: 12px; border: 1px solid #ffffff24; border-radius: 16px; background: linear-gradient(145deg, #29244bef, #14172fef); box-shadow: 0 10px 26px #05071470; }
-.battle-deck-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.battle-progress-copy { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; color: #e0c4ff; font-size: .68rem; font-weight: 800; }
+.battle-progress-track { height: 9px; overflow: hidden; margin-bottom: 10px; border: 1px solid #bb78e7; border-radius: 999px; background: #211c3b; box-shadow: inset 0 1px 3px #080714; }
+.battle-progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a83fe1, #ec8bfa); box-shadow: 0 0 9px #d56af8a6; transition: width 120ms linear; }
+.battle-deck-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
 .battle-deck-heading h3 { margin: 2px 0 0; font-size: .95rem; }
 .deck-count { color: #e0c4ff; font-size: .78rem; font-weight: 800; }
 .battle-hand { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.battle-card { min-width: 0; min-height: 88px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; overflow: hidden; padding: 8px 5px 7px; border: 2px solid #f3c95c; border-radius: 13px; background: radial-gradient(ellipse at 50% 20%, #9b65d6 0, #50348e 55%, #28265b 100%); box-shadow: inset 0 0 0 1px var(--border-light), 0 4px 10px #07091d70; text-align: center; }
+.battle-card { min-width: 0; min-height: 88px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; overflow: hidden; padding: 8px 5px 7px; border: 2px solid #eac65f; border-radius: 13px; background: radial-gradient(ellipse at 50% 20%, #8e55c6 0, #593494 55%, #2d285d 100%); box-shadow: inset 0 0 0 1px var(--border-light), 0 4px 10px #07091d70; text-align: center; }
 .battle-card::after { position: absolute; inset: 0; background: linear-gradient(135deg, #fff2, transparent 45%); content: ""; pointer-events: none; }
 .battle-card-icon { font-size: clamp(1.35rem, 7vw, 2rem); line-height: 1.05; filter: drop-shadow(0 2px 2px #160d38); }
 .battle-card-name { max-width: 100%; overflow: hidden; color: var(--white); font-size: clamp(.55rem, 2.7vw, .72rem); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .battle-card-empty { min-height: 88px; display: grid; place-items: center; border: 1px dashed #aaa5d05c; border-radius: 13px; background: #0d102454; color: #aaaeca; font-size: .68rem; font-weight: 700; text-align: center; }
 .battle-controls { margin-top: 12px; text-align: center; }
+.battle-controls { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .battle-controls .btn { width: min(100%, 420px); }
-#battle-result { min-height: 1.4em; margin: 8px 0 0; font-size: 1rem; font-weight: 800; }
+#battle-result { min-height: 1.4em; margin: 0; font-size: 1rem; font-weight: 800; }
 .orientation-prompt { display: none; }
 
 @media (max-width: 420px) {
@@ -316,27 +320,37 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 
 @media (prefers-reduced-motion: reduce) {
   .screen.active, .orientation-icon { animation: none; }
-  .xp-fill, .trophy-fill { transition: none; }
+  .xp-fill, .trophy-fill, .battle-progress-fill { transition: none; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
   .battle-open #app { max-width: none; padding: 8px 12px; }
   .battle-open #screen-battle.active {
     min-height: calc(100svh - 16px);
-    display: grid;
-    grid-template: auto minmax(0, 1fr) auto / minmax(0, 1.5fr) minmax(230px, .75fr);
-    align-items: center;
-    gap: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
   }
 
-  .battle-open .battle-topbar { grid-column: 1 / -1; grid-row: 1; min-height: 42px; padding-bottom: 0; }
-  .battle-open .battle-arena-frame { grid-column: 1; grid-row: 2; }
-  .battle-open #battle-canvas { max-height: calc(100svh - 84px); }
-  .battle-open .battle-deck-panel { grid-column: 2; grid-row: 2; align-self: end; margin-top: 0; padding: 9px; }
-  .battle-open .battle-hand { gap: 5px; }
-  .battle-open .battle-card { min-height: 74px; padding-inline: 3px; }
-  .battle-open .battle-controls { grid-column: 2; grid-row: 3; margin-top: 0; }
-  .battle-open .battle-controls .btn { min-height: 40px; padding: 8px; }
-  .battle-open #battle-result { margin: 4px 0 0; font-size: .82rem; }
+  .battle-open .battle-topbar { min-height: 34px; flex: 0 0 34px; padding: 0 4px; }
+  .battle-open .battle-arena-frame { min-height: 0; flex: 1 1 auto; }
+  .battle-open #battle-canvas { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; object-fit: fill; }
+  .battle-open .battle-scoreboard { top: 0; }
+  .battle-open .fortress-health { width: min(25%, 200px); padding: 4px 8px; font-size: .6rem; }
+  .battle-open .fortress-health strong { font-size: .65rem; }
+  .battle-open .battle-deck-panel { flex: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; column-gap: 12px; margin-top: 0; padding: 6px 9px; }
+  .battle-open .battle-progress-copy { grid-column: 1 / -1; margin-bottom: 3px; }
+  .battle-open .battle-progress-track { grid-column: 1 / -1; height: 7px; margin-bottom: 5px; }
+  .battle-open .battle-deck-heading { grid-column: 1 / -1; margin-bottom: 4px; }
+  .battle-open .battle-deck-heading h3 { font-size: .75rem; }
+  .battle-open .battle-hand { grid-column: 1; grid-row: 4; gap: 6px; }
+  .battle-open .battle-card { min-height: 64px; padding: 4px 3px; }
+  .battle-open .battle-card-icon { font-size: 1.55rem; }
+  .battle-open .battle-card-name { font-size: .58rem; }
+  .battle-open .battle-card-empty { min-height: 64px; }
+  .battle-open .battle-controls { grid-column: 2; grid-row: 4; min-width: 155px; flex-direction: column; gap: 3px; margin: 0; }
+  .battle-open .battle-controls .btn { min-height: 36px; padding: 6px 10px; font-size: .68rem; }
+  .battle-open #battle-result { min-height: 1em; font-size: .68rem; }
   .battle-open .bottom-nav { display: none; }
 }
