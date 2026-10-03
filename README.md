@@ -45,6 +45,9 @@ bei jedem Push nach `main`.
   Siege verlängern sie, Niederlagen beenden sie und Remis lassen sie bestehen.
 - **Kampfstatistik**: das Profil zählt alle abgeschlossenen Kämpfe, die
   Siegesquote sowie gespielte Karten und gewirkte Zauber dauerhaft.
+- **Errungenschaften**: dauerhafte Kampfziele belohnen erreichte Meilensteine
+  bei Kämpfen, Siegen, gespielten Karten und gewirkten Zaubern einmalig mit
+  Münzen.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.

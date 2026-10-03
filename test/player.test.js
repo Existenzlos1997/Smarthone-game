@@ -194,15 +194,18 @@ test('career battle statistics restore only non-negative safe integer counters',
 
 test('lifetime achievements track career stats and award each reward once', () => {
   const player = new Player();
-  player.restoreAchievementClaims(['first-battle', 'unknown', 'first-battle']);
-  assert.equal(player.achievementRewardsClaimed.length, 1);
+  player.restoreAchievementClaims(['unknown', 'unknown']);
+  assert.deepEqual(player.achievementRewardsClaimed, []);
+  const restored = new Player();
+  restored.restoreAchievementClaims(['first-battle', 'unknown', 'first-battle']);
+  assert.deepEqual(restored.achievementRewardsClaimed, ['first-battle']);
   assert.throws(() => player.claimAchievement('not-an-achievement'), /Unknown achievement/);
   assert.throws(() => player.claimAchievement('veteran'), /not complete/);
 
   player.recordBattle({ result: 'player', cardsPlayed: 5, spellsCast: 1 });
   const firstBattle = player.getAchievements().find(({ id }) => id === 'first-battle');
   assert.equal(firstBattle.completed, true);
-  assert.equal(firstBattle.claimed, true);
+  assert.equal(firstBattle.claimed, false);
   assert.equal(player.claimAchievement('first-battle').coins, 50);
   assert.throws(() => player.claimAchievement('first-battle'), /already claimed/);
 
