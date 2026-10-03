@@ -11,13 +11,19 @@ const RARITY_ICON = {
   [RARITY.EPIC]: '🔥',
   [RARITY.LEGENDARY]: '🌙',
 };
+const RARITY_LABEL = {
+  [RARITY.COMMON]: 'Gewöhnlich',
+  [RARITY.RARE]: 'Selten',
+  [RARITY.EPIC]: 'Episch',
+  [RARITY.LEGENDARY]: 'Legendär',
+};
 const CARD_ART = {
   swordsman: '⚔️',
   archer: '🏹',
   shieldbearer: '🛡️',
   knight: '🗡️',
   mage: '🧙',
-  catapult: '🏹',
+  catapult: '🪨',
   griffin: '🦅',
   dragon: '🐉',
 };
@@ -114,10 +120,12 @@ function onShare() {
 function renderMenu() {
   document.getElementById('menu-fortress-title').textContent = `Festung von ${player.name}`;
   document.getElementById('menu-level').textContent = player.level;
+  document.getElementById('menu-level').setAttribute('aria-label', `Spielerstufe ${player.level}`);
   document.getElementById('menu-level-label').textContent = player.level;
-  document.getElementById('menu-xp-fill').style.width = `${Math.min(100, player.xp)}%`;
-  document.getElementById('menu-xp-count').textContent = `${player.xp} / 100 XP`;
-  document.querySelector('.xp-track').setAttribute('aria-valuenow', player.xp);
+  const displayedXp = Math.max(0, Math.min(100, player.xp));
+  document.getElementById('menu-xp-fill').style.width = `${displayedXp}%`;
+  document.getElementById('menu-xp-count').textContent = `${displayedXp} / 100 XP`;
+  document.querySelector('.xp-track').setAttribute('aria-valuenow', displayedXp);
   document.getElementById('menu-coins').textContent = player.coins;
   document.getElementById('menu-gems').textContent = player.gems;
 
@@ -163,16 +171,26 @@ function collectionTile(cardId) {
   const level = player.getCardLevel(cardId);
   const div = document.createElement('div');
   div.className = `card rarity-${card.rarity}`;
-  div.innerHTML = `
-    <div class="collection-card-art" aria-hidden="true">${CARD_ART[cardId] ?? '✧'}</div>
-    <div class="card-badges">
-      <span class="rarity-badge">${RARITY_ICON[card.rarity]} ${card.rarity}</span>
-      <span class="level-badge">St. ${level}</span>
-    </div>
-    <div class="card-name"></div>
-    <div class="card-sub">❤ ${card.hp} &nbsp; ⚔ ${card.damage}</div>
-  `;
-  div.querySelector('.card-name').textContent = card.name;
+  const art = document.createElement('div');
+  art.className = 'collection-card-art';
+  art.setAttribute('aria-hidden', 'true');
+  art.textContent = CARD_ART[cardId] ?? '✧';
+  const badges = document.createElement('div');
+  badges.className = 'card-badges';
+  const rarity = document.createElement('span');
+  rarity.className = 'rarity-badge';
+  rarity.textContent = `${RARITY_ICON[card.rarity]} ${RARITY_LABEL[card.rarity]}`;
+  const levelBadge = document.createElement('span');
+  levelBadge.className = 'level-badge';
+  levelBadge.textContent = `St. ${level}`;
+  badges.append(rarity, levelBadge);
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = card.name;
+  const stats = document.createElement('div');
+  stats.className = 'card-sub';
+  stats.textContent = `❤ ${card.hp} · ⚔ ${card.damage}`;
+  div.append(art, badges, name, stats);
   return div;
 }
 
@@ -422,16 +440,6 @@ function renderDeckScreen() {
 }
 
 // ---------------------------------------------------------------- battle screen
-const BATTLE_CARD_ICONS = {
-  swordsman: '⚔️',
-  archer: '🏹',
-  shieldbearer: '🛡️',
-  knight: '🗡️',
-  mage: '🧙',
-  catapult: '🏹',
-  griffin: '🦅',
-  dragon: '🐉',
-};
 function buildEnemyForce() {
   const pool = CARD_LIBRARY.filter((c) => c.rarity === RARITY.COMMON || c.rarity === RARITY.RARE);
   const pick = () => pool[Math.floor(Math.random() * pool.length)].id;
@@ -477,7 +485,7 @@ function renderBattleHand() {
     const icon = document.createElement('span');
     icon.className = 'battle-card-icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = BATTLE_CARD_ICONS[cardId] ?? '⚔️';
+    icon.textContent = CARD_ART[cardId] ?? '⚔️';
     const name = document.createElement('span');
     name.className = 'battle-card-name';
     name.textContent = card.name;
@@ -529,7 +537,8 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
     const enemyHp = Math.round((FORTRESS_HP - (FORTRESS_HP - result.enemyFortressHp) * progress) / FORTRESS_HP * 100);
     document.getElementById('player-fortress-health').textContent = `${playerHp}%`;
     document.getElementById('enemy-fortress-health').textContent = `${enemyHp}%`;
-    document.getElementById('battle-timer').textContent = `${Math.ceil((1 - progress) * result.durationSeconds)}s`;
+    const battleDuration = Number.isFinite(result.durationSeconds) ? result.durationSeconds : durationMs / 1000;
+    document.getElementById('battle-timer').textContent = `${Math.ceil((1 - progress) * battleDuration)}s`;
 
     if (progress < 1) {
       requestAnimationFrame(frame);
@@ -610,8 +619,8 @@ function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck) {
   ctx.restore();
 
   const advance = Math.min(1, progress / 0.72);
-  drawTroops(ctx, playerDeck, advance, true, groundY);
-  drawTroops(ctx, enemyDeck, advance, false, groundY);
+  drawTroops(ctx, playerDeck, advance, true, groundY, width);
+  drawTroops(ctx, enemyDeck, advance, false, groundY, width);
 
   if (progress > 0.68 && progress < 0.96) {
     const pulse = 0.5 + Math.sin(progress * 90) * 0.5;
@@ -687,12 +696,12 @@ function drawFortress(ctx, x, y, color, hp) {
   ctx.stroke();
 }
 
-function drawTroops(ctx, deck, progress, isPlayer, groundY) {
-  const icons = deck.map((cardId) => BATTLE_CARD_ICONS[cardId] ?? '⚔️');
+function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
+  const icons = deck.map((cardId) => CARD_ART[cardId] ?? '⚔️');
   if (icons.length === 0) return;
   icons.forEach((icon, index) => {
-    const startX = isPlayer ? 175 + index * 8 : 785 - index * 8;
-    const endX = isPlayer ? 460 - index * 12 : 500 + index * 12;
+    const startX = isPlayer ? width * 0.182 + index * width * 0.008 : width * 0.818 - index * width * 0.008;
+    const endX = isPlayer ? width * 0.479 - index * width * 0.0125 : width * 0.521 + index * width * 0.0125;
     const x = startX + (endX - startX) * progress;
     const y = groundY - 22 - (index % 2) * 17;
     ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
