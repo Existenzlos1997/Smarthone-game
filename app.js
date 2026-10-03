@@ -1,5 +1,5 @@
 import { DECK_SIZE, MAX_CARD_LEVEL, Player } from './src/player.js';
-import { CARD_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
+import { CARD_LIBRARY, SPELL_LIBRARY, getCardAtLevel, getCardById, RARITY } from './src/cards.js';
 import { LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { LiveBattle, MAX_ENERGY, BATTLE_DURATION_SECONDS } from './src/liveBattle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
@@ -683,12 +683,18 @@ let lastResult = null;
 let leaveBattleDeadline = 0;
 
 function buildEnemyForce() {
-  const deck = CARD_LIBRARY.map((card) => card.id);
-  for (let index = deck.length - 1; index > 0; index -= 1) {
-    const target = Math.floor(Math.random() * (index + 1));
-    [deck[index], deck[target]] = [deck[target], deck[index]];
-  }
-  return { deck, defenders: [deck[0], deck[1]] };
+  const monsters = CARD_LIBRARY.map((card) => card.id);
+  const spells = SPELL_LIBRARY.map((card) => card.id);
+  const shuffle = (cards) => {
+    for (let index = cards.length - 1; index > 0; index -= 1) {
+      const target = Math.floor(Math.random() * (index + 1));
+      [cards[index], cards[target]] = [cards[target], cards[index]];
+    }
+    return cards;
+  };
+  const selectedMonsters = shuffle(monsters).slice(0, 6);
+  const deck = shuffle([...selectedMonsters, ...shuffle(spells).slice(0, 2)]);
+  return { deck, defenders: selectedMonsters.slice(0, 2) };
 }
 
 function renderBattleScreen() {

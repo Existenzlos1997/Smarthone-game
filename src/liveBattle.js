@@ -207,14 +207,58 @@ export class LiveBattle {
 
   #enemyDeploy() {
     const affordable = this.enemyHand
-      .map((cardId, index) => ({ cardId, index, cost: getCardById(cardId).cost }))
-      .filter((entry) => getCardById(entry.cardId).type === 'monster' && entry.cost <= this.enemyEnergy);
-    if (!affordable.length) return;
-    const choice = affordable[Math.floor(this.rng() * affordable.length)];
-    this.enemyEnergy -= choice.cost;
+      .map((cardId, index) => ({ cardId, index, card: getCardById(cardId) }))
+      .filter((entry) => entry.card.cost <= this.enemyEnergy);
+    const spellChoices = affordable
+      .filter((entry) => entry.card.type === 'spell')
+      .map((entry) => ({ ...entry, ...this.#chooseEnemySpellTarget(entry.card) }))
+      .filter((entry) => entry.x !== null && entry.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (spellChoices.length > 0) {
+      const choice = spellChoices[0];
+      this.enemyEnergy -= choice.card.cost;
+      this.#applySpell(choice.card, choice.x, 'enemy');
+      this.enemyQueue.splice(choice.index, 1);
+      this.enemyQueue.push(choice.cardId);
+      return;
+    }
+
+    const monsters = affordable.filter((entry) => entry.card.type === 'monster');
+    if (!monsters.length) return;
+    const choice = monsters[Math.floor(this.rng() * monsters.length)];
+    this.enemyEnergy -= choice.card.cost;
     this.units.push(makeUnit('enemy', choice.cardId, LANE_LENGTH - 1.4, false, this.enemyCardLevels));
     this.enemyQueue.splice(choice.index, 1);
     this.enemyQueue.push(choice.cardId);
+  }
+
+  #chooseEnemySpellTarget(spell) {
+    const allies = this.units.filter((unit) => unit.owner === 'enemy' && unit.hp > 0);
+    const opponents = this.units.filter((unit) => unit.owner === 'player' && unit.hp > 0);
+    const usesAllies = spell.effect === 'heal' || spell.effect === 'haste';
+    const candidates = usesAllies ? allies : opponents;
+    const radius = (spell.radius ?? 0) * LANE_LENGTH / 900;
+    const targetPoints = candidates.map((unit) => unit.x);
+    if (spell.effect === 'fire') targetPoints.push(0.5);
+    let best = { x: null, score: 0 };
+
+    for (const x of targetPoints) {
+      const affected = spell.effect === 'lightning'
+        ? candidates
+        : candidates.filter((unit) => Math.abs(unit.x - x) <= radius);
+      let score = 0;
+      if (spell.effect === 'heal') {
+        score = affected.reduce((sum, unit) => sum + Math.min(spell.amount, unit.card.hp - unit.hp), 0);
+      } else if (spell.effect === 'haste' || spell.effect === 'slow') {
+        score = affected.filter((unit) => unit.modifiedUntil <= this.elapsed).length;
+      } else {
+        score = Math.min(spell.maxTargets ?? affected.length, affected.length) * spell.damage;
+      }
+      if (spell.effect === 'fire' && x <= radius) score += spell.damage * spell.fortressDamage;
+      if (score > best.score) best = { x, score };
+    }
+    return best;
   }
 
   #closestEnemy(unit, living) {
@@ -251,14 +295,15 @@ export class LiveBattle {
     if (target.hp === 0) this.effects.push({ x: target.x, amount: 0, owner: target.owner, age: 0, kind: 'death' });
   }
 
-  #applySpell(spell, x) {
+  #applySpell(spell, x, owner = 'player') {
     const radius = (spell.radius ?? 0) * LANE_LENGTH / 900;
+    const opposingOwner = owner === 'player' ? 'enemy' : 'player';
     const candidates = this.units.filter((unit) => unit.hp > 0);
     const targets = candidates.filter((unit) => {
-      const isPlayerUnit = unit.owner === 'player';
-      if (spell.effect === 'heal' || spell.effect === 'haste') return isPlayerUnit && Math.abs(unit.x - x) <= radius;
-      if (spell.effect === 'lightning') return unit.owner === 'enemy';
-      return unit.owner === 'enemy' && Math.abs(unit.x - x) <= radius;
+      const isAlly = unit.owner === owner;
+      if (spell.effect === 'heal' || spell.effect === 'haste') return isAlly && Math.abs(unit.x - x) <= radius;
+      if (spell.effect === 'lightning') return unit.owner === opposingOwner;
+      return unit.owner === opposingOwner && Math.abs(unit.x - x) <= radius;
     });
 
     if (spell.effect === 'lightning') {
@@ -279,10 +324,12 @@ export class LiveBattle {
       }
     }
 
-    if (spell.effect === 'fire' && Math.abs(LANE_LENGTH - x) <= radius) {
+    const fortressX = owner === 'player' ? LANE_LENGTH : 0;
+    if (spell.effect === 'fire' && Math.abs(fortressX - x) <= radius) {
       const amount = Math.round(spell.damage * spell.fortressDamage);
-      this.enemyFortressHp = Math.max(0, this.enemyFortressHp - amount);
-      this.effects.push({ x: LANE_LENGTH, amount, owner: 'player', age: 0, kind: 'damage' });
+      if (owner === 'player') this.enemyFortressHp = Math.max(0, this.enemyFortressHp - amount);
+      else this.playerFortressHp = Math.max(0, this.playerFortressHp - amount);
+      this.effects.push({ x: fortressX, amount, owner, age: 0, kind: 'damage' });
     }
 
     this.effects.push({
@@ -290,11 +337,12 @@ export class LiveBattle {
       radius,
       spellId: spell.id,
       effect: spell.effect,
-      owner: 'player',
+      owner,
       age: 0,
       duration: 0.8,
       kind: 'spell-burst',
     });
     if (this.enemyFortressHp <= 0) this.winner = 'player';
+    else if (this.playerFortressHp <= 0) this.winner = 'enemy';
   }
 }
