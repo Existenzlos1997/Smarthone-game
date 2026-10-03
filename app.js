@@ -297,8 +297,32 @@ function cardTile(cardId, { selected = false, onClick = null } = {}) {
   const card = getCardById(cardId);
   const div = document.createElement('div');
   div.className = `card rarity-${card.rarity}${selected ? ' selected' : ''}`;
-  div.innerHTML = `<div>${card.name}</div><div class="stats">❤${card.hp} ⚔${card.damage} 🏃${card.speed}</div>`;
-  if (onClick) div.addEventListener('click', onClick);
+  const art = document.createElement('span');
+  art.className = 'collection-card-art';
+  art.setAttribute('aria-hidden', 'true');
+  art.textContent = CARD_ART[cardId] ?? '✧';
+  const details = document.createElement('div');
+  details.className = 'card-tile-details';
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = card.name;
+  const stats = document.createElement('div');
+  stats.className = 'stats';
+  stats.textContent = `❤ ${card.hp} · ⚔ ${card.damage} · ➤ ${card.speed}`;
+  details.append(name, stats);
+  div.append(art, details);
+  if (onClick) {
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-pressed', String(selected));
+    div.tabIndex = 0;
+    div.addEventListener('click', onClick);
+    div.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onClick();
+      }
+    });
+  }
   return div;
 }
 

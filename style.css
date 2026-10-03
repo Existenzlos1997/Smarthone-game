@@ -660,6 +660,7 @@ body {
 .card-sub { grid-column: 1 / -1; margin-top: 5px; color: #c0cbc1; font-size: .6rem; }
 .card .stats { grid-column: 1 / -1; color: #c0cbc1; font-size: .6rem; }
 .card.selected { outline: 2px solid #e8cb81; }
+.card-tile-details { min-width: 0; }
 
 .subbar { min-height: 54px; padding-bottom: 8px; border-bottom: 1px solid #ffffff18; }
 .subbar h2 { margin: 0; color: #f4e9ce; font-size: 1rem; text-align: right; }
