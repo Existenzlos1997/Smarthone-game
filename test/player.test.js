@@ -6,8 +6,10 @@ test('starts at level 1 with starter cards', () => {
   const player = new Player();
   assert.equal(player.level, 1);
   assert.equal(player.xp, 0);
-  assert.equal(player.collection.length, 8);
-  assert.deepEqual(player.deck, player.collection);
+  assert.equal(player.collection.length, 9);
+  assert.ok(player.collection.includes('pfeil'));
+  assert.equal(player.deck.length, 8);
+  assert.ok(!player.deck.includes('pfeil'));
 });
 
 test('addXp levels up once the threshold is reached', () => {
@@ -86,7 +88,7 @@ test('setDeck requires exactly 8 unique owned cards', () => {
   assert.throws(() => player.setDeck(player.collection.slice(0, 7)));
   assert.throws(() => player.setDeck([...player.collection.slice(0, 7), 'swordsman']));
   assert.throws(() => player.setDeck([...player.collection.slice(0, 7), 'unknown']));
-  player.setDeck([...player.collection].reverse());
+  player.setDeck([...player.deck].reverse());
   assert.equal(player.isDeckReady(), true);
-  assert.deepEqual(player.deck, [...player.collection].reverse());
+  assert.deepEqual(player.deck, [...player.collection].filter((cardId) => cardId !== 'pfeil').reverse());
 });

@@ -273,6 +273,8 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 .battle-card { min-width: 0; min-height: 94px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: hidden; padding: 8px 5px 7px; border: 3px solid #f8d750; border-radius: 15px; background: radial-gradient(ellipse at 50% 20%, #8e55c6 0, #593494 55%, #2d285d 100%); box-shadow: inset 0 0 0 1px var(--border-light), 0 4px 10px #07091d70; color: #fff; text-align: center; font: inherit; cursor: pointer; }
 .battle-card::after { position: absolute; inset: 0; background: linear-gradient(135deg, #fff2, transparent 45%); content: ""; pointer-events: none; }
 .battle-card:disabled { filter: brightness(.58) saturate(.6); cursor: default; }
+.battle-card.spell-card { border-color: #ffb45d; background: radial-gradient(ellipse at 50% 20%, #ad684f 0, #713d62 55%, #342550 100%); }
+.battle-card.selected { outline: 3px solid #fff3a1; outline-offset: 2px; transform: translateY(-5px); }
 .battle-card-cost { position: absolute; top: 3px; left: 3px; z-index: 1; width: 31px; height: 31px; display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; background: linear-gradient(145deg, #d997ff, #8b42d3); box-shadow: 0 2px 4px #17102e; color: #fff; font-size: .95rem; font-weight: 900; }
 .battle-card-icon { width: min(100%, 64px); height: 53px; display: grid; place-items: center; line-height: 1.05; }
 .battle-card-image { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 3px #160d38b3); }

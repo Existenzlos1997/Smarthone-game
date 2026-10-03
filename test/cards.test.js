@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rollRandomCard, CARD_LIBRARY, getCardById } from '../src/cards.js';
+import { rollRandomCard, CARD_LIBRARY, SPELL_LIBRARY, getCardById } from '../src/cards.js';
 
 test('getCardById returns the matching card', () => {
   const card = getCardById('dragon');
@@ -9,6 +9,16 @@ test('getCardById returns the matching card', () => {
 
 test('getCardById throws for unknown ids', () => {
   assert.throws(() => getCardById('unicorn'));
+});
+
+test('the six authored spell cards have complete targeting data', () => {
+  assert.deepEqual(SPELL_LIBRARY.map((card) => card.id), ['pfeil', 'feuer', 'blitz', 'heil', 'frost', 'wut']);
+  for (const spell of SPELL_LIBRARY) {
+    assert.equal(getCardById(spell.id), spell);
+    assert.equal(spell.type, 'spell');
+    assert.ok(spell.cost > 0);
+    assert.ok(spell.effect);
+  }
 });
 
 test('rollRandomCard always returns a card from the library', () => {

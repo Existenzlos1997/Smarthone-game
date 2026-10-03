@@ -11,6 +11,7 @@ const SIMULATION_STEP = 0.05;
 
 function makeUnit(owner, cardId, x, stationary = false) {
   const card = getCardById(cardId);
+  if (card.type === 'spell') throw new Error(`Spell cards cannot be deployed as units: ${cardId}`);
   return {
     owner,
     cardId,
@@ -20,6 +21,9 @@ function makeUnit(owner, cardId, x, stationary = false) {
     stationary,
     attackCooldown: 0,
     hitFlash: 0,
+    speedMultiplier: 1,
+    attackSpeedMultiplier: 1,
+    modifiedUntil: 0,
   };
 }
 
@@ -42,6 +46,7 @@ export class LiveBattle {
     ];
     this.effects = [];
     this.winner = null;
+    this.selectedSpellIndex = null;
   }
 
   get playerHand() { return this.playerQueue.slice(0, 4); }
@@ -53,12 +58,52 @@ export class LiveBattle {
     if (!Number.isInteger(handIndex) || handIndex < 0 || handIndex > 3) return { ok: false, reason: 'invalid-card' };
     const cardId = this.playerQueue[handIndex];
     const card = getCardById(cardId);
+    if (card.type === 'spell') return this.selectSpell(handIndex);
     if (this.playerEnergy < card.cost) return { ok: false, reason: 'energy' };
     this.playerEnergy -= card.cost;
     this.units.push(makeUnit('player', cardId, 1.4));
-    this.playerQueue.splice(handIndex, 1);
-    this.playerQueue.push(cardId);
+    this.#rotateCard(handIndex, cardId);
     return { ok: true, cardId };
+  }
+
+  selectSpell(handIndex) {
+    if (this.winner) return { ok: false, reason: 'finished' };
+    if (!Number.isInteger(handIndex) || handIndex < 0 || handIndex > 3) return { ok: false, reason: 'invalid-card' };
+    const cardId = this.playerQueue[handIndex];
+    const card = getCardById(cardId);
+    if (card.type !== 'spell') return { ok: false, reason: 'not-spell' };
+    if (this.playerEnergy < card.cost) return { ok: false, reason: 'energy' };
+    if (this.selectedSpellIndex === handIndex) {
+      this.selectedSpellIndex = null;
+      return { ok: true, cancelled: true, cardId };
+    }
+    this.selectedSpellIndex = handIndex;
+    return { ok: true, targeting: true, cardId };
+  }
+
+  castSpellAt(x) {
+    const index = this.selectedSpellIndex;
+    if (index === null) return { ok: false, reason: 'no-spell-selected' };
+    if (this.winner) return { ok: false, reason: 'finished' };
+    if (!Number.isFinite(x) || x < 0 || x > LANE_LENGTH) return { ok: false, reason: 'invalid-target' };
+    const cardId = this.playerQueue[index];
+    const spell = getCardById(cardId);
+    if (this.playerEnergy < spell.cost) return { ok: false, reason: 'energy' };
+    const ownSide = x <= LANE_LENGTH / 2;
+    if (spell.effect === 'heal' || spell.effect === 'haste') {
+      if (!ownSide) return { ok: false, reason: 'wrong-side' };
+    } else if (ownSide) {
+      return { ok: false, reason: 'wrong-side' };
+    }
+    this.playerEnergy -= spell.cost;
+    this.#applySpell(spell, x);
+    this.#rotateCard(index, cardId);
+    this.selectedSpellIndex = null;
+    return { ok: true, cardId, x };
+  }
+
+  cancelSpellTarget() {
+    this.selectedSpellIndex = null;
   }
 
   step(deltaSeconds) {
@@ -79,6 +124,11 @@ export class LiveBattle {
     deck.forEach(getCardById);
   }
 
+  #rotateCard(index, cardId) {
+    this.playerQueue.splice(index, 1);
+    this.playerQueue.push(cardId);
+  }
+
   #tick(dt) {
     this.elapsed = Math.min(BATTLE_DURATION_SECONDS, this.elapsed + dt);
     this.playerEnergy = Math.min(MAX_ENERGY, this.playerEnergy + PLAYER_ENERGY_PER_SECOND * dt);
@@ -91,7 +141,12 @@ export class LiveBattle {
 
     for (const unit of this.units) {
       unit.hitFlash = Math.max(0, unit.hitFlash - dt);
-      unit.attackCooldown -= dt;
+      if (unit.modifiedUntil && this.elapsed >= unit.modifiedUntil) {
+        unit.speedMultiplier = 1;
+        unit.attackSpeedMultiplier = 1;
+        unit.modifiedUntil = 0;
+      }
+      unit.attackCooldown -= dt * unit.attackSpeedMultiplier;
     }
     this.effects = this.effects.filter((effect) => {
       effect.age += dt;
@@ -103,7 +158,7 @@ export class LiveBattle {
       const target = this.#closestEnemy(unit, living);
       if (target && Math.abs(target.x - unit.x) <= unit.card.range) continue;
       if (!unit.stationary) {
-        unit.x = Math.max(0, Math.min(LANE_LENGTH, unit.x + (unit.owner === 'player' ? 1 : -1) * unit.card.speed * dt));
+        unit.x = Math.max(0, Math.min(LANE_LENGTH, unit.x + (unit.owner === 'player' ? 1 : -1) * unit.card.speed * unit.speedMultiplier * dt));
       }
     }
 
@@ -138,7 +193,7 @@ export class LiveBattle {
   #enemyDeploy() {
     const affordable = this.enemyHand
       .map((cardId, index) => ({ cardId, index, cost: getCardById(cardId).cost }))
-      .filter((entry) => entry.cost <= this.enemyEnergy);
+      .filter((entry) => getCardById(entry.cardId).type === 'monster' && entry.cost <= this.enemyEnergy);
     if (!affordable.length) return;
     const choice = affordable[Math.floor(this.rng() * affordable.length)];
     this.enemyEnergy -= choice.cost;
@@ -164,7 +219,7 @@ export class LiveBattle {
   #damage(target, amount, attacker) {
     target.hp = Math.max(0, target.hp - amount);
     target.hitFlash = 0.16;
-    if (attacker.card.range > 1) {
+    if (attacker && attacker.card.range > 1) {
       const duration = Math.max(0.12, Math.abs(attacker.x - target.x) / 8.33);
       this.effects.push({
         x: attacker.x,
@@ -179,5 +234,52 @@ export class LiveBattle {
     }
     this.effects.push({ x: target.x, amount, owner: target.owner, age: 0, kind: 'damage' });
     if (target.hp === 0) this.effects.push({ x: target.x, amount: 0, owner: target.owner, age: 0, kind: 'death' });
+  }
+
+  #applySpell(spell, x) {
+    const radius = (spell.radius ?? 0) * LANE_LENGTH / 900;
+    const candidates = this.units.filter((unit) => unit.hp > 0);
+    const targets = candidates.filter((unit) => {
+      const isPlayerUnit = unit.owner === 'player';
+      if (spell.effect === 'heal' || spell.effect === 'haste') return isPlayerUnit && Math.abs(unit.x - x) <= radius;
+      if (spell.effect === 'lightning') return unit.owner === 'enemy';
+      return unit.owner === 'enemy' && Math.abs(unit.x - x) <= radius;
+    });
+
+    if (spell.effect === 'lightning') {
+      targets.sort((a, b) => b.hp - a.hp);
+      targets.splice(spell.maxTargets);
+    }
+
+    for (const target of targets) {
+      if (spell.effect === 'heal') {
+        target.hp = Math.min(target.card.hp, target.hp + spell.amount);
+        target.hitFlash = 0.08;
+      } else if (spell.effect === 'slow' || spell.effect === 'haste') {
+        target.speedMultiplier = spell.multiplier;
+        target.attackSpeedMultiplier = spell.multiplier;
+        target.modifiedUntil = this.elapsed + spell.duration;
+      } else {
+        this.#damage(target, spell.damage, null);
+      }
+    }
+
+    if (spell.effect === 'fire' && Math.abs(LANE_LENGTH - x) <= radius) {
+      const amount = Math.round(spell.damage * spell.fortressDamage);
+      this.enemyFortressHp = Math.max(0, this.enemyFortressHp - amount);
+      this.effects.push({ x: LANE_LENGTH, amount, owner: 'player', age: 0, kind: 'damage' });
+    }
+
+    this.effects.push({
+      x,
+      radius,
+      spellId: spell.id,
+      effect: spell.effect,
+      owner: 'player',
+      age: 0,
+      duration: 0.8,
+      kind: 'spell-burst',
+    });
+    if (this.enemyFortressHp <= 0) this.winner = 'player';
   }
 }

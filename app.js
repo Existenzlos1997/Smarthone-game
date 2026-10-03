@@ -62,7 +62,9 @@ function getMonsterSprite(cardId) {
 function createMonsterArtwork(cardId, className) {
   const image = document.createElement('img');
   image.className = className;
-  image.src = `assets/monsters/${cardId}.svg`;
+  image.src = getCardById(cardId).type === 'spell'
+    ? `assets/spells/${cardId}.svg`
+    : `assets/monsters/${cardId}.svg`;
   image.alt = '';
   image.setAttribute('aria-hidden', 'true');
   image.loading = 'eager';
@@ -123,6 +125,31 @@ const screens = document.querySelectorAll('.screen');
 const navButtons = document.querySelectorAll('.nav-btn');
 let battleAnimationFrame = null;
 let liveBattle = null;
+let spellAimX = null;
+
+const battleCanvas = document.getElementById('battle-canvas');
+battleCanvas.addEventListener('pointermove', (event) => {
+  if (!liveBattle || liveBattle.selectedSpellIndex === null) return;
+  const rect = battleCanvas.getBoundingClientRect();
+  spellAimX = Math.max(0, Math.min(LANE_LENGTH, (event.clientX - rect.left) / rect.width * LANE_LENGTH));
+});
+battleCanvas.addEventListener('pointerdown', (event) => {
+  if (!liveBattle || liveBattle.selectedSpellIndex === null) return;
+  const rect = battleCanvas.getBoundingClientRect();
+  const targetX = (event.clientX - rect.left) / rect.width * LANE_LENGTH;
+  const result = liveBattle.castSpellAt(targetX);
+  if (!result.ok) {
+    const feedback = result.reason === 'wrong-side'
+      ? 'Wähle die passende Schlachtfeldhälfte für diesen Zauber.'
+      : 'Dieses Zauberziel ist ungültig.';
+    document.getElementById('battle-result').textContent = feedback;
+    return;
+  }
+  spellAimX = null;
+  document.getElementById('battle-result').textContent = `${getCardById(result.cardId).name} wirkt!`;
+  renderBattleHand(liveBattle);
+  updateBattleEnergy(liveBattle.playerEnergy);
+});
 
 function showScreen(id) {
   if (id === 'screen-battle' && typeof screen.orientation?.lock === 'function') {
@@ -231,6 +258,18 @@ function renderMenu() {
   if (battleArena) battleArena.textContent = current.name;
 }
 
+function spellSummary(card) {
+  const summaries = {
+    damage: `${card.damage} Schaden`,
+    fire: `${card.damage} Schaden`,
+    lightning: `${card.damage} Schaden · bis zu ${card.maxTargets} Ziele`,
+    heal: `${card.amount} Heilung`,
+    slow: `${Math.round((1 - card.multiplier) * 100)}% verlangsamen`,
+    haste: `${Math.round((card.multiplier - 1) * 100)}% beschleunigen`,
+  };
+  return summaries[card.effect] ?? 'Zauber';
+}
+
 function collectionTile(cardId) {
   const card = getCardById(cardId);
   const level = player.getCardLevel(cardId);
@@ -254,7 +293,9 @@ function collectionTile(cardId) {
   name.textContent = card.name;
   const stats = document.createElement('div');
   stats.className = 'card-sub';
-  stats.textContent = `❤ ${card.hp} · ⚔ ${card.damage}`;
+  stats.textContent = card.type === 'spell'
+    ? `✨ ${spellSummary(card)} · ${card.cost} Energie`
+    : `❤ ${card.hp} · ⚔ ${card.damage}`;
   div.append(art, badges, name, stats);
   return div;
 }
@@ -391,7 +432,9 @@ function cardTile(cardId, { selected = false, onClick = null } = {}) {
   name.textContent = card.name;
   const stats = document.createElement('div');
   stats.className = 'stats';
-  stats.textContent = `❤ ${card.hp} · ⚔ ${card.damage} · ➤ ${card.speed}`;
+  stats.textContent = card.type === 'spell'
+    ? `✨ ${spellSummary(card)} · ${card.cost} Energie`
+    : `❤ ${card.hp} · ⚔ ${card.damage} · ➤ ${card.speed}`;
   details.append(name, stats);
   div.append(art, details);
   if (onClick) {
@@ -430,7 +473,7 @@ function renderFortressScreen() {
     slotsEl.appendChild(slot);
   });
 
-  player.collection.forEach((cardId) => {
+  player.collection.filter((cardId) => getCardById(cardId).type === 'monster').forEach((cardId) => {
     const tile = cardTile(cardId, {
       onClick: () => {
         const emptyIndex = player.fortressSlots.findIndex((s) => s === null);
@@ -522,6 +565,7 @@ function renderBattleScreen() {
   const ctx = canvas.getContext('2d');
   const { current } = getArenaProgress(player.trophies);
   liveBattle = null;
+  spellAimX = null;
   document.getElementById('battle-arena-name').textContent = current.name;
   document.getElementById('battle-timer').textContent = '3:00';
   document.getElementById('player-fortress-health').textContent = '100%';
@@ -550,7 +594,7 @@ function renderBattleHand(session) {
     const card = getCardById(cardId);
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `battle-card rarity-${card.rarity}`;
+    button.className = `battle-card rarity-${card.rarity}${liveBattle?.selectedSpellIndex === index ? ' selected' : ''}${card.type === 'spell' ? ' spell-card' : ''}`;
     button.dataset.handIndex = String(index);
     button.setAttribute('aria-label', `${card.name}, kostet ${card.cost} Energie`);
     const cost = document.createElement('span');
@@ -567,7 +611,11 @@ function renderBattleHand(session) {
     button.addEventListener('click', () => {
       const result = liveBattle?.playCard(index);
       if (!result?.ok) return;
-      document.getElementById('battle-result').textContent = `${card.name} rückt aus!`;
+      document.getElementById('battle-result').textContent = result.targeting
+        ? `${card.name}: Tippe auf das Schlachtfeld.`
+        : result.cancelled
+          ? 'Zauberziel abgebrochen.'
+          : card.type === 'spell' ? `${card.name} bereit.` : `${card.name} rückt aus!`;
       renderBattleHand(liveBattle);
       updateBattleEnergy(liveBattle.playerEnergy);
     });
@@ -583,6 +631,7 @@ function renderBattleHand(session) {
   const cost = document.createElement('strong');
   cost.textContent = String(card.cost);
   next.append(icon, cost);
+  next.classList.toggle('spell-card', card.type === 'spell');
 }
 
 function setEnergyDisplay(energy) {
@@ -654,6 +703,32 @@ function drawLiveBattle(ctx, canvas, session) {
   const width = canvas.width;
   const height = canvas.height;
   const groundY = height * ARENA_LAYOUT.groundHeight;
+  if (session.selectedSpellIndex !== null) {
+    const spell = getCardById(session.playerQueue[session.selectedSpellIndex]);
+    const targetX = spellAimX ?? (spell.effect === 'heal' || spell.effect === 'haste' ? 5 : 15);
+    const targetPx = targetX / LANE_LENGTH * width;
+    const radiusPx = (spell.radius ?? 95) / 900 * width;
+    ctx.save();
+    ctx.fillStyle = spell.effect === 'heal' || spell.effect === 'haste' ? '#46e1bf20' : '#ff718b20';
+    ctx.fillRect(
+      spell.effect === 'heal' || spell.effect === 'haste' ? 0 : width / 2,
+      0,
+      width / 2,
+      height,
+    );
+    ctx.strokeStyle = spell.effect === 'heal' || spell.effect === 'haste' ? '#71ffe0b5' : '#ff9baa';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([9, 7]);
+    ctx.beginPath();
+    ctx.ellipse(targetPx, groundY - 6, radiusPx, 26, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(targetPx, groundY - 40);
+    ctx.lineTo(targetPx, groundY + 8);
+    ctx.stroke();
+    ctx.restore();
+  }
   for (const unit of session.units) {
     if (unit.stationary) continue;
     const x = unit.x / LANE_LENGTH * width;
@@ -728,6 +803,29 @@ function drawLiveBattle(ctx, canvas, session) {
       ctx.beginPath();
       ctx.moveTo(x - Math.sign(effect.toX - effect.fromX) * 12, y + 3);
       ctx.lineTo(x, y);
+      ctx.stroke();
+    } else if (effect.kind === 'spell-burst') {
+      const progress = Math.min(1, effect.age / effect.duration);
+      const x = effect.x / LANE_LENGTH * width;
+      const radius = Math.max(10, effect.radius / LANE_LENGTH * width * (0.72 + progress * 0.28));
+      const colors = {
+        damage: '#f4e8ff',
+        fire: '#ff8a45',
+        lightning: '#ffe95f',
+        heal: '#65f3c6',
+        slow: '#72dcff',
+        haste: '#ffc45e',
+      };
+      const color = colors[effect.effect] ?? '#f4e8ff';
+      ctx.globalAlpha = 1 - progress;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = `${color}24`;
+      ctx.lineWidth = 5 * (1 - progress) + 1;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.ellipse(x, groundY - 6, radius, 24 + progress * 16, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
     } else {
       ctx.globalAlpha = 1 - effect.age / 0.65;
@@ -1123,6 +1221,12 @@ function drawBattleCreature(ctx, x, y, cardId, isPlayer, index, progress) {
   roundedRectPath(ctx, -18, -57, 36, 5, 3);
   ctx.fill();
   ctx.restore();
+}
+
+if ('serviceWorker' in navigator && ['https:', 'http:'].includes(location.protocol)) {
+  navigator.serviceWorker.register(new URL('./sw.js', import.meta.url), { scope: './' }).catch((error) => {
+    console.warn('Offline-App konnte nicht vorbereitet werden.', error);
+  });
 }
 
 renderMenu();

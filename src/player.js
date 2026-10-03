@@ -26,10 +26,10 @@ export class Player {
     this.coins = 0;
     this.gems = STARTER_GEMS;
     this.trophies = 0;
-    this.collection = ['swordsman', 'archer', 'shieldbearer', 'knight', 'mage', 'catapult', 'griffin', 'dragon'];
+    this.collection = ['swordsman', 'archer', 'shieldbearer', 'knight', 'mage', 'catapult', 'griffin', 'dragon', 'pfeil'];
     this.cardLevels = Object.fromEntries(this.collection.map((cardId) => [cardId, 1]));
     this.fortressSlots = new Array(FORTRESS_SLOTS).fill(null);
-    this.deck = [...this.collection];
+    this.deck = this.collection.slice(0, DECK_SIZE);
     this.lastHuntAt = null;
   }
 
@@ -105,7 +105,9 @@ export class Player {
     if (!this.collection.includes(cardId)) {
       throw new Error(`Card not in collection: ${cardId}`);
     }
-    getCardById(cardId); // validates card exists
+    if (getCardById(cardId).type === 'spell') {
+      throw new Error('Spells cannot be equipped as fortress guards');
+    }
     this.fortressSlots[slotIndex] = cardId;
   }
 

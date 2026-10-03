@@ -20,6 +20,62 @@ test('playing a card spends energy and rotates it to the end of the deck', () =>
   assert.equal(battle.units.filter((unit) => unit.owner === 'player').length, 1);
 });
 
+test('spell cards require a target and rotate only after a valid cast', () => {
+  const spellDeck = ['pfeil', ...deck.slice(0, 7)];
+  const battle = new LiveBattle({ playerDeck: spellDeck, enemyDeck: [...deck].reverse() });
+  battle.playerEnergy = 10;
+  battle.step(1.5);
+  assert.equal(battle.playCard(0).targeting, true);
+  assert.equal(battle.castSpellAt(4).reason, 'wrong-side');
+  assert.equal(battle.playerEnergy, 10);
+  const enemy = battle.units.find((unit) => unit.owner === 'enemy');
+  enemy.x = 12;
+  const cast = battle.castSpellAt(12);
+  assert.equal(cast.ok, true);
+  assert.equal(enemy.hp, enemy.card.hp - 45);
+  assert.equal(battle.playerEnergy, 7);
+  assert.equal(battle.playerQueue.at(-1), 'pfeil');
+  assert.ok(battle.effects.some((effect) => effect.kind === 'spell-burst' && effect.spellId === 'pfeil'));
+});
+
+test('retapping a selected spell cancels it without spending energy', () => {
+  const battle = new LiveBattle({ playerDeck: ['pfeil', ...deck.slice(0, 7)], enemyDeck: [...deck].reverse() });
+  assert.equal(battle.selectSpell(0).targeting, true);
+  assert.equal(battle.selectSpell(0).cancelled, true);
+  assert.equal(battle.selectedSpellIndex, null);
+  assert.equal(battle.playerEnergy, 4);
+});
+
+test('healing, frost and rage apply effects only to the correct side', () => {
+  const testSpell = (spellId, targetX, expectedEffect) => {
+    const spellDeck = [spellId, ...deck.slice(0, 7)];
+    const battle = new LiveBattle({ playerDeck: spellDeck, enemyDeck: [...deck].reverse() });
+    battle.playCard(1);
+    battle.step(1.5);
+    const friendly = battle.units.find((unit) => unit.owner === 'player');
+    const enemy = battle.units.find((unit) => unit.owner === 'enemy');
+    friendly.x = targetX;
+    friendly.hp = Math.max(1, friendly.card.hp - 30);
+    battle.playerEnergy = 10;
+    battle.selectSpell(0);
+    assert.equal(battle.castSpellAt(targetX).ok, true);
+    if (expectedEffect === 'heal') assert.ok(friendly.hp > friendly.card.hp - 30);
+    if (expectedEffect === 'slow') assert.equal(enemy.speedMultiplier, 0.45);
+    if (expectedEffect === 'haste') assert.equal(friendly.speedMultiplier, 1.5);
+  };
+  testSpell('heil', 1, 'heal');
+  testSpell('frost', 19, 'slow');
+  testSpell('wut', 1, 'haste');
+});
+
+test('fireball damages an enemy fortress when cast in range', () => {
+  const battle = new LiveBattle({ playerDeck: ['feuer', ...deck.slice(0, 7)], enemyDeck: [...deck].reverse() });
+  battle.playerEnergy = 10;
+  battle.selectSpell(0);
+  assert.equal(battle.castSpellAt(19.5).ok, true);
+  assert.equal(battle.enemyFortressHp, 1000 - 98);
+});
+
 test('rejects cards that are unaffordable or not in the active hand', () => {
   const battle = new LiveBattle({ playerDeck: deck, enemyDeck: [...deck].reverse() });
   battle.playerEnergy = 2;
@@ -87,7 +143,7 @@ test('requires decks of exactly eight distinct known cards', () => {
 });
 
 test('a live match ends at the time limit with the fortress-health winner', () => {
-  const battle = new LiveBattle({ playerDeck: deck, enemyDeck: [...deck].reverse() });
+  const battle = new LiveBattle({ playerDeck: deck, enemyDeck: [...deck].reverse(), rng: () => 0.5 });
   battle.playerFortressHp = 100_000;
   battle.enemyFortressHp = 700;
   battle.step(180);
