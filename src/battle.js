@@ -6,6 +6,15 @@ export const ATTACK_INTERVAL = 1; // seconds between attacks for every unit
 const TICK = 0.1; // seconds per simulation step
 const MAX_TIME = 120; // safety cap so a battle can never run forever
 
+export function interpolateFortressHealth(result, progress) {
+  if (!result) return { player: FORTRESS_HP, enemy: FORTRESS_HP };
+  const amount = Math.max(0, Math.min(1, progress));
+  return {
+    player: FORTRESS_HP + (result.playerFortressHp - FORTRESS_HP) * amount,
+    enemy: FORTRESS_HP + (result.enemyFortressHp - FORTRESS_HP) * amount,
+  };
+}
+
 let nextUnitId = 1;
 
 function spawnUnit(owner, cardId, x) {

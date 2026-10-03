@@ -1,6 +1,6 @@
 import { DECK_SIZE, Player } from './src/player.js';
 import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
-import { simulateBattle, LANE_LENGTH, FORTRESS_HP } from './src/battle.js';
+import { simulateBattle, LANE_LENGTH, FORTRESS_HP, interpolateFortressHealth } from './src/battle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 import { getArenaProgress } from './src/arenas.js';
 
@@ -96,13 +96,16 @@ const navButtons = document.querySelectorAll('.nav-btn');
 let battleAnimationFrame = null;
 
 function showScreen(id) {
+  if (id === 'screen-battle' && typeof screen.orientation?.lock === 'function') {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
   if (id !== 'screen-battle' && typeof screen.orientation?.unlock === 'function') {
     screen.orientation.unlock();
   }
   if (id !== 'screen-battle' && battleAnimationFrame !== null) {
     cancelAnimationFrame(battleAnimationFrame);
     battleAnimationFrame = null;
-    document.getElementById('btn-start-battle').disabled = false;
+    document.getElementById('btn-start-battle').disabled = !player.isDeckReady();
     document.getElementById('battle-result').textContent = 'Kampf abgebrochen — kein Ergebnis gewertet.';
   }
   if (id !== 'screen-hunt') cancelHuntSession();
@@ -116,12 +119,7 @@ function showScreen(id) {
   if (id === 'screen-hunt') startHuntSession();
 }
 
-document.getElementById('btn-battle').addEventListener('click', () => {
-  showScreen('screen-battle');
-  if (typeof screen.orientation?.lock === 'function') {
-    screen.orientation.lock('landscape').catch(() => {});
-  }
-});
+document.getElementById('btn-battle').addEventListener('click', () => showScreen('screen-battle'));
 document.getElementById('btn-fortress').addEventListener('click', () => showScreen('screen-fortress'));
 document.querySelectorAll('[data-back]').forEach((btn) => btn.addEventListener('click', () => showScreen('screen-menu')));
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => {
@@ -575,7 +573,7 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   let previousTimer;
   function frame(now) {
     const progress = Math.min(1, (now - start) / durationMs);
-    const fortressHealth = getFortressHealth(result, progress);
+    const fortressHealth = interpolateFortressHealth(result, progress);
     drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth);
     const playerHp = Math.round(fortressHealth.player / FORTRESS_HP * 100);
     const enemyHp = Math.round(fortressHealth.enemy / FORTRESS_HP * 100);
@@ -597,15 +595,7 @@ function animateResult(ctx, canvas, result, playerDeck, enemyDeck, onDone) {
   battleAnimationFrame = requestAnimationFrame(frame);
 }
 
-function getFortressHealth(result, progress) {
-  if (!result) return { player: FORTRESS_HP, enemy: FORTRESS_HP };
-  return {
-    player: FORTRESS_HP + (result.playerFortressHp - FORTRESS_HP) * progress,
-    enemy: FORTRESS_HP + (result.enemyFortressHp - FORTRESS_HP) * progress,
-  };
-}
-
-function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = getFortressHealth(result, progress)) {
+function drawBattleScene(ctx, canvas, progress, result, playerDeck, enemyDeck, fortressHealth = interpolateFortressHealth(result, progress)) {
   ctx.save();
   const { width, height } = canvas;
   const groundY = height * ARENA_LAYOUT.groundHeight;

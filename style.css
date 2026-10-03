@@ -149,7 +149,8 @@ body {
 .resource-value small, .resource-next small { overflow: hidden; color: #bfc9bd; font-size: .48rem; font-weight: 900; letter-spacing: .06em; text-overflow: ellipsis; white-space: nowrap; }
 .resource-divider { width: 1px; height: 25px; flex: 0 0 auto; background: #a5a58a66; }
 .resource-next { margin-left: auto; text-align: right; }
-.plus-btn { width: 21px; height: 21px; flex: 0 0 auto; border: 0; border-radius: 50%; background: linear-gradient(#a7d58c, #64975c); box-shadow: 0 1px 3px #07100c; color: var(--white); font-weight: 700; cursor: pointer; }
+.plus-btn { position: relative; width: 21px; height: 21px; flex: 0 0 auto; border: 0; border-radius: 50%; background: linear-gradient(#a7d58c, #64975c); box-shadow: 0 1px 3px #07100c; color: var(--white); font-weight: 700; cursor: pointer; }
+.plus-btn::before { position: absolute; inset: -12px; content: ""; }
 
 .player-progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; margin: 11px 3px 14px; }
 .progress-label, .xp-count { color: #c9d1c8; font-size: .61rem; font-weight: 900; white-space: nowrap; }
@@ -312,6 +313,11 @@ button:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px
 }
 
 @keyframes rotate-device { to { transform: rotate(90deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.active, .orientation-icon { animation: none; }
+  .xp-fill, .trophy-fill { transition: none; }
+}
 
 @media (orientation: landscape) and (max-height: 600px) {
   .battle-open #app { max-width: none; padding: 8px 12px; }
