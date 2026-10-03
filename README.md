@@ -32,6 +32,12 @@ bei jedem Push nach `main`.
   verschwindet (6 Runden). Je höher die Trefferquote, desto seltener die am
   Ende gefundene Karte. Neue Karten kommen in die Sammlung, bereits
   vorhandene Karten werden stattdessen eine Stufe höher gestuft.
+- **Tägliche Aufgaben**: gewinne einen Kampf, spiele Karten und wirke Zauber,
+  um zusätzliche Münzen zu verdienen. Fortschritt und bereits abgeholte
+  Belohnungen bleiben im Spielstand und setzen sich täglich nach UTC zurück.
+- **Kampfprotokoll**: die zehn letzten Siege, Niederlagen und Remis werden mit
+  Datum, Pokaländerung, Spielzeit, gespielten Karten und Festungszustand lokal
+  gespeichert.
 - **Festung ausrüsten** (außerhalb des Kampfes): die Festung hat 4 Slots, die
   ausschließlich mit eigenen Karten aus der Sammlung bestückt werden können.
   Diese Karten verteidigen die Festung automatisch während eines Kampfes.
@@ -42,8 +48,8 @@ bei jedem Push nach `main`.
   und von selbst kämpfen, bis eine der beiden Festungen fällt. Sieg/Niederlage
   verändert die Pokalzahl und damit die Arena.
 - **Untere Navigationsleiste**: Shop, Karten (Deck-Builder), Kampf (Festung),
-  Jagd und Allianz — Shop und Allianz sind aktuell Platzhalter für künftige
-  Features.
+  Jagd und Allianz. Im Shop lassen sich Karten mit Münzen bis Stufe 10 aufwerten;
+  jede Stufe verbessert ihre Kampfwerte. Allianzen sind noch ein Platzhalter.
 
 ## Projektstruktur
 
@@ -67,6 +73,34 @@ bei jedem Push nach `main`.
 npx http-server .
 # dann im Browser http://localhost:8080 öffnen
 ```
+
+## Native Android- und iOS-App (ohne Store-Veröffentlichung)
+
+Das Projekt verwendet Capacitor, um dieselbe Spieloberfläche in nativen
+Android- und iOS-Projekten auszuführen. Es wird dabei keine App in einen Store
+hochgeladen. Benötigt werden Node.js 22 oder neuer und npm. Für Android brauchst
+du zusätzlich Android Studio mit Android SDK; zum Bauen für iOS brauchst du
+macOS mit Xcode.
+
+```bash
+npm install
+npm run cap:sync
+npm run cap:open:android
+# Auf macOS zusätzlich oder stattdessen:
+npm run cap:open:ios
+```
+
+`cap:sync` baut die Webdateien neu und kopiert sie in beide nativen Projekte.
+Anschließend kannst du in Android Studio oder Xcode einen Emulator oder ein
+angeschlossenes Gerät auswählen und die App starten. Nach Änderungen am Spiel
+erneut `npm run cap:sync` ausführen. Die nativen Projektdateien liegen in
+`android/` und `ios/`; das erzeugte Web-Build unter `www/` wird nicht eingecheckt.
+
+Bei Pushes, Pull Requests und manuellem Start baut GitHub Actions zusätzlich ein
+Android-Debug-APK und eine iOS-Simulator-App. Beide erscheinen als Workflow-
+Artefakte für 14 Tage. Das Android-APK ist zum lokalen Testen vorgesehen; die
+iOS-Datei ist nur für den Simulator und keine auf einem iPhone installierbare
+oder für den Store signierte Veröffentlichung.
 
 ## Tests ausführen
 

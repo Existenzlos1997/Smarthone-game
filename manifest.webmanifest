@@ -1,0 +1,19 @@
+{
+  "name": "Festung von Kaltmark",
+  "short_name": "Kaltmark",
+  "description": "Ein eigenständiges Fantasy-Kartenspiel mit Echtzeit-Festungskämpfen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1b1240",
+  "theme_color": "#1b1240",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
