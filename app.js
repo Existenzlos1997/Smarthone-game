@@ -3,6 +3,8 @@ import { CARD_LIBRARY, getCardById, RARITY } from './src/cards.js';
 import { simulateBattle, LANE_LENGTH, FORTRESS_HP } from './src/battle.js';
 import { generateHuntRounds, isHit, HUNT_ROUNDS, ROUND_DURATION_MS, TARGET_RADIUS } from './src/huntGame.js';
 import { getArenaProgress } from './src/arenas.js';
+import { migrateSave, SAVE_VERSION } from './src/migrations.js';
+import { startUpdater } from './src/updater.js';
 
 const STORAGE_KEY = 'festungskampf.save.v1';
 const RARITY_ICON = {
@@ -17,7 +19,7 @@ function loadPlayer() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
     try {
-      const data = JSON.parse(raw);
+      const data = migrateSave(JSON.parse(raw)) ?? {};
       player.level = data.level ?? 1;
       player.xp = data.xp ?? 0;
       player.coins = data.coins ?? 0;
@@ -38,6 +40,7 @@ function loadPlayer() {
 
 function savePlayer() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    saveVersion: SAVE_VERSION,
     level: player.level,
     xp: player.xp,
     coins: player.coins,
@@ -52,6 +55,7 @@ function savePlayer() {
 }
 
 const player = loadPlayer();
+startUpdater();
 
 // ---------------------------------------------------------------- navigation
 const screens = document.querySelectorAll('.screen');
