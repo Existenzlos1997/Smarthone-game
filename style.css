@@ -473,24 +473,10 @@ body {
 
 .battle-card-icon { font-size: clamp(1.35rem, 7vw, 2rem); line-height: 1.05; filter: drop-shadow(0 2px 2px #160d38); }
 .battle-card-name { max-width: 100%; overflow: hidden; color: #fff; font-size: clamp(0.55rem, 2.7vw, 0.72rem); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.battle-card-cost {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  background: linear-gradient(150deg, #e5a8ff, #9d42e9);
-  box-shadow: 0 1px 4px #160d38;
-  color: #fff;
-  font-size: 0.68rem;
-  font-weight: 900;
-}
-
 .battle-card-empty {
+  display: grid;
+  min-height: 88px;
+  place-items: center;
   border: 1px dashed #aaa5d05c;
   border-radius: 13px;
   background: #0d102454;

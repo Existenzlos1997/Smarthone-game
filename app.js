@@ -391,17 +391,6 @@ const BATTLE_CARD_ICONS = {
   griffin: '🦅',
   dragon: '🐉',
 };
-const BATTLE_CARD_COSTS = {
-  swordsman: 3,
-  archer: 3,
-  shieldbearer: 4,
-  knight: 4,
-  mage: 4,
-  catapult: 5,
-  griffin: 5,
-  dragon: 6,
-};
-
 function buildEnemyForce() {
   const pool = CARD_LIBRARY.filter((c) => c.rarity === RARITY.COMMON || c.rarity === RARITY.RARE);
   const pick = () => pool[Math.floor(Math.random() * pool.length)].id;
@@ -444,9 +433,6 @@ function renderBattleHand() {
     }
     const card = getCardById(cardId);
     element.className = `battle-card rarity-${card.rarity}`;
-    const cost = document.createElement('span');
-    cost.className = 'battle-card-cost';
-    cost.textContent = BATTLE_CARD_COSTS[cardId] ?? 3;
     const icon = document.createElement('span');
     icon.className = 'battle-card-icon';
     icon.setAttribute('aria-hidden', 'true');
@@ -454,7 +440,7 @@ function renderBattleHand() {
     const name = document.createElement('span');
     name.className = 'battle-card-name';
     name.textContent = card.name;
-    element.append(cost, icon, name);
+    element.append(icon, name);
     hand.appendChild(element);
   }
 }
