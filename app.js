@@ -48,16 +48,27 @@ const RARITY_LABEL = {
   [RARITY.EPIC]: 'Episch',
   [RARITY.LEGENDARY]: 'Legendär',
 };
-const CARD_ART = {
-  swordsman: '⚔️',
-  archer: '🏹',
-  shieldbearer: '🛡️',
-  knight: '🗡️',
-  mage: '🧙',
-  catapult: '🪨',
-  griffin: '🦅',
-  dragon: '🐉',
-};
+const monsterSprites = new Map();
+
+function getMonsterSprite(cardId) {
+  if (!monsterSprites.has(cardId)) {
+    const image = new Image();
+    image.src = `assets/monsters/${cardId}.svg`;
+    monsterSprites.set(cardId, image);
+  }
+  return monsterSprites.get(cardId);
+}
+
+function createMonsterArtwork(cardId, className) {
+  const image = document.createElement('img');
+  image.className = className;
+  image.src = `assets/monsters/${cardId}.svg`;
+  image.alt = '';
+  image.setAttribute('aria-hidden', 'true');
+  image.loading = 'eager';
+  image.decoding = 'async';
+  return image;
+}
 
 function loadPlayer() {
   const player = new Player();
@@ -218,7 +229,7 @@ function collectionTile(cardId) {
   const art = document.createElement('div');
   art.className = 'collection-card-art';
   art.setAttribute('aria-hidden', 'true');
-  art.textContent = CARD_ART[cardId] ?? '✧';
+  art.appendChild(createMonsterArtwork(cardId, 'card-art-image'));
   const badges = document.createElement('div');
   badges.className = 'card-badges';
   const rarity = document.createElement('span');
@@ -362,7 +373,7 @@ function cardTile(cardId, { selected = false, onClick = null } = {}) {
   const art = document.createElement('span');
   art.className = 'collection-card-art';
   art.setAttribute('aria-hidden', 'true');
-  art.textContent = CARD_ART[cardId] ?? '✧';
+  art.appendChild(createMonsterArtwork(cardId, 'card-art-image'));
   const details = document.createElement('div');
   details.className = 'card-tile-details';
   const name = document.createElement('div');
@@ -532,8 +543,7 @@ function renderBattleHand() {
     element.className = `battle-card rarity-${card.rarity}`;
     const icon = document.createElement('span');
     icon.className = 'battle-card-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = CARD_ART[cardId] ?? '⚔️';
+    icon.appendChild(createMonsterArtwork(cardId, 'battle-card-image'));
     const name = document.createElement('span');
     name.className = 'battle-card-name';
     name.textContent = card.name;
@@ -831,21 +841,49 @@ function drawTroops(ctx, deck, progress, isPlayer, groundY, width) {
       ? width * ARENA_LAYOUT.playerTroopEnd - index * width * ARENA_LAYOUT.troopEndSpacing
       : width * ARENA_LAYOUT.enemyTroopEnd + index * width * ARENA_LAYOUT.troopEndSpacing;
     const x = startX + (endX - startX) * progress;
-    const y = groundY - ARENA_LAYOUT.troopHeight - (index % 2) * ARENA_LAYOUT.troopStagger;
-    const palette = CREATURE_PALETTE[cardId] ?? CREATURE_PALETTE.swordsman;
-    drawBattleCreature(ctx, x, y, palette, isPlayer, index);
+    const y = groundY - (index % 2) * ARENA_LAYOUT.troopStagger * 0.55;
+    drawBattleCreature(ctx, x, y, cardId, isPlayer, index, progress);
   });
   ctx.restore();
 }
 
-function drawBattleCreature(ctx, x, y, palette, isPlayer, index) {
+function drawBattleCreature(ctx, x, y, cardId, isPlayer, index, progress) {
   const direction = isPlayer ? 1 : -1;
   const size = 1 + (index % 2) * 0.06;
+  const moving = progress < TROOP_ADVANCE_END;
+  const time = performance.now() / 1000;
+  const bob = Math.sin(time * 9 + index * 1.7) * (moving ? 2.4 : 0.8);
+  const clashProgress = Math.max(0, Math.min(1, (progress - CLASH_START) / (CLASH_END - CLASH_START)));
+  const strike = clashProgress > 0 ? Math.max(0, Math.sin(clashProgress * Math.PI * 5 + index * 1.5)) : 0;
   ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(direction * size, size);
+  ctx.translate(x + direction * strike * 6, y + bob);
+  ctx.rotate(direction * strike * 0.07);
+  ctx.scale(direction * size * (1 + strike * 0.08), size * (1 - strike * 0.06));
   ctx.shadowColor = '#11132599';
   ctx.shadowBlur = 7;
+  const sprite = getMonsterSprite(cardId);
+  if (sprite.complete && sprite.naturalWidth > 0) {
+    ctx.drawImage(sprite, -39, -80, 78, 78);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#17192d';
+    ctx.beginPath();
+    roundedRectPath(ctx, -19, -82, 38, 6, 3);
+    ctx.fill();
+    ctx.fillStyle = isPlayer ? '#56d5b4' : '#ff7182';
+    ctx.beginPath();
+    roundedRectPath(ctx, -17, -81, 34, 4, 2);
+    ctx.fill();
+    if (strike > 0.88) {
+      ctx.strokeStyle = '#fff2b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(31, -38, 13, -1.2, 0.8);
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+  const palette = CREATURE_PALETTE[cardId] ?? CREATURE_PALETTE.swordsman;
   ctx.fillStyle = isPlayer ? '#4fd8c688' : '#ff758888';
   ctx.beginPath();
   ctx.ellipse(0, 3, 25, 8, 0, 0, Math.PI * 2);
